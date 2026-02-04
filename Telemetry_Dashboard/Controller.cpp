@@ -5,105 +5,105 @@ TelemetryController::TelemetryController(TelemetryModel* m, TelemetryView* v, Wi
   view = v;
   udp = u;
 
+  bootState = BOOT_ANIMATION;
+  bootStartTime = 0;
+  firstPacketReceived = false;
   lastDisplayUpdate = 0;
-  lastInputCheck = 0;
 
-  lastButtonState = HIGH;
-  buttonPressTime = 0;
+  lastGear = -99;
+  lastDRSAvailable = 0;
 }
 
 void TelemetryController::init() {
   Serial.begin(SERIAL_BAUD_RATE);
-  Serial.println("Telemetry Dashboard Starting...");
+  Serial.println("F1 Telemetry Dashboard Starting...");
+
+  pinMode(PIN_BUTTON, INPUT_PULLUP);
+  pinMode(PIN_BUZZER, OUTPUT);
+  digitalWrite(PIN_BUZZER, LOW);
 
   view->init();
-
   setupWiFi();
 
   udp->begin(UDP_PORT);
   Serial.print("UDP listening on port: ");
   Serial.println(UDP_PORT);
 
-  delay(BOOT_SPLASH_DURATION);
-
-  view->drawStaticLayout();
+  bootStartTime = millis();
+  bootState = BOOT_ANIMATION;
 }
 
 void TelemetryController::setupWiFi() {
-  UserSettings* settings = model->getSettings();
+  Serial.println("Starting WiFi AP...");
+  WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD);
 
-  if (settings->wifiMode == DASHBOARD_WIFI_AP) {
-    Serial.println("Starting WiFi AP...");
-    WiFi.softAP(settings->wifiSSID, settings->wifiPassword);
-
-    IPAddress ip = WiFi.softAPIP();
-    Serial.print("AP IP: ");
-    Serial.println(ip);
-  } else {
-    Serial.println("Connecting to WiFi...");
-    WiFi.begin(settings->wifiSSID, settings->wifiPassword);
-
-    uint32_t startTime = millis();
-    while (WiFi.status() != WL_CONNECTED && millis() - startTime < WIFI_TIMEOUT_MS) {
-      delay(500);
-      Serial.print(".");
-    }
-
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.println("\nWiFi Connected!");
-      Serial.print("IP: ");
-      Serial.println(WiFi.localIP());
-    } else {
-      Serial.println("\nWiFi Connection Failed! Falling back to AP mode...");
-      WiFi.softAP(DEFAULT_AP_SSID, DEFAULT_AP_PASSWORD);
-      Serial.print("AP IP: ");
-      Serial.println(WiFi.softAPIP());
-    }
-  }
+  IPAddress ip = WiFi.softAPIP();
+  Serial.print("AP IP: ");
+  Serial.println(ip);
 }
 
 void TelemetryController::update() {
   uint32_t currentTime = millis();
+  uint32_t elapsed = currentTime - bootStartTime;
 
-  if (currentTime - lastInputCheck >= INPUT_UPDATE_INTERVAL) {
-    handleInput();
-    lastInputCheck = currentTime;
+  if (bootState == BOOT_ANIMATION) {
+    view->drawBootAnimation(elapsed);
+    if (elapsed >= 2000) {
+      bootState = BOOT_WAITING;
+      view->drawBootInfo(WiFi.softAPIP());
+    }
+    return;
   }
+
+  if (bootState == BOOT_WAITING) {
+    view->drawBootInfo(WiFi.softAPIP());
+
+    handleNetworkPackets();
+
+    if (firstPacketReceived) {
+      Serial.println("First packet received - showing dashboard");
+      bootState = BOOT_COMPLETE;
+      view->drawLayout();
+    }
+    return;
+  }
+
+  handleButtonPress();
 
   handleNetworkPackets();
 
+  if (WiFi.softAPgetStationNum() == 0 && firstPacketReceived) {
+    Serial.println("Client disconnected - returning to boot screen");
+    bootState = BOOT_WAITING;
+    firstPacketReceived = false;
+    view->resetBootInfo();
+    return;
+  }
+
+  checkBuzzerTriggers();
+
   if (currentTime - lastDisplayUpdate >= DISPLAY_UPDATE_INTERVAL) {
-    model->updateConnectionStatus();
     view->render();
     lastDisplayUpdate = currentTime;
   }
 }
 
-void TelemetryController::handleInput() {
-  if (checkButton()) {
-    Serial.println("Button pressed - switching screen");
-    model->nextScreen();
-  }
-}
+void TelemetryController::handleButtonPress() {
+  static bool lastButtonState = HIGH;
 
-bool TelemetryController::checkButton() {
-  bool currentState = digitalRead(PIN_BUTTON);
+  bool reading = digitalRead(PIN_BUTTON);
 
-  if (currentState != lastButtonState) {
-    delay(BUTTON_DEBOUNCE_MS);
-    currentState = digitalRead(PIN_BUTTON);
-
-    if (currentState != lastButtonState) {
-      lastButtonState = currentState;
-
-      if (currentState == LOW) {
-        buttonPressTime = millis();
-        return true;
-      }
-    }
+  if (reading == LOW && lastButtonState == HIGH) {
+    view->nextScreen();
+    Serial.print("Screen changed to: ");
+    Serial.println(view->getCurrentScreen());
+    lastButtonState = LOW;
+    return;
   }
 
-  return false;
+  if (reading == HIGH) {
+    lastButtonState = HIGH;
+  }
 }
 
 void TelemetryController::handleNetworkPackets() {
@@ -111,7 +111,6 @@ void TelemetryController::handleNetworkPackets() {
 
   if (packetSize > 0) {
     int len = udp->read(packetBuffer, PACKET_BUFFER_SIZE);
-
     if (len > 0) {
       processPacket(packetBuffer, len);
     }
@@ -119,56 +118,83 @@ void TelemetryController::handleNetworkPackets() {
 }
 
 void TelemetryController::processPacket(uint8_t* buffer, int size) {
+  if (!firstPacketReceived) {
+    firstPacketReceived = true;
+  }
+
   if (size < sizeof(PacketHeader)) {
     return;
   }
 
   PacketHeader* header = (PacketHeader*)buffer;
-
   uint8_t playerIndex = header->m_playerCarIndex;
-  UserSettings* settings = model->getSettings();
-
-  if (settings->playerIndexOverride >= 0) {
-    playerIndex = settings->playerIndexOverride;
-  }
 
   switch (header->m_packetId) {
     case PACKET_ID_CAR_TELEMETRY:
-      if (size >= sizeof(PacketHeader) + sizeof(CarTelemetryData)) {
-        PacketCarTelemetryData* packet = (PacketCarTelemetryData*)buffer;
-        model->updateTelemetry(packet, playerIndex);
+      if (size >= sizeof(PacketCarTelemetryData)) {
+        model->updateTelemetry((PacketCarTelemetryData*)buffer, playerIndex);
       }
       break;
 
     case PACKET_ID_LAP_DATA:
-      if (size >= sizeof(PacketHeader) + sizeof(LapData)) {
-        PacketLapData* packet = (PacketLapData*)buffer;
-        model->updateLapData(packet, playerIndex);
+      if (size >= sizeof(PacketLapData)) {
+        model->updateLapData((PacketLapData*)buffer, playerIndex);
       }
       break;
 
     case PACKET_ID_CAR_STATUS:
-      if (size >= sizeof(PacketHeader) + sizeof(CarStatusData)) {
-        PacketCarStatusData* packet = (PacketCarStatusData*)buffer;
-        model->updateCarStatus(packet, playerIndex);
+      if (size >= sizeof(PacketCarStatusData)) {
+        model->updateCarStatus((PacketCarStatusData*)buffer, playerIndex);
       }
       break;
 
     case PACKET_ID_CAR_DAMAGE:
-      if (size >= sizeof(PacketHeader) + sizeof(CarDamageData)) {
-        PacketCarDamageData* packet = (PacketCarDamageData*)buffer;
-        model->updateCarDamage(packet, playerIndex);
+      if (size >= sizeof(PacketCarDamageData)) {
+        model->updateCarDamage((PacketCarDamageData*)buffer, playerIndex);
       }
       break;
 
     case PACKET_ID_SESSION:
-      if (size >= sizeof(PacketHeader) + 100) {
-        PacketSessionData* packet = (PacketSessionData*)buffer;
-        model->updateSessionData(packet);
+      if (size >= sizeof(PacketSessionData)) {
+        model->updateSessionData((PacketSessionData*)buffer);
       }
       break;
 
+    case PACKET_ID_CAR_SETUPS:
+      if (size >= sizeof(PacketCarSetupData)) {
+        model->updateCarSetup((PacketCarSetupData*)buffer, playerIndex);
+      }
+      break;
     default:
       break;
   }
+}
+
+void TelemetryController::playBuzzerBeep(uint8_t duration) {
+  tone(PIN_BUZZER, 2000, duration);
+  delay(duration);
+  noTone(PIN_BUZZER);
+}
+
+void TelemetryController::checkBuzzerTriggers() {
+  int8_t currentGear = model->getGear();
+  uint8_t currentDRS = model->getDRS();
+
+  if (lastGear != -99 && currentGear != lastGear) {
+    if (currentGear > 0 && lastGear > 0) {
+      playBuzzerBeep(50);
+      Serial.print("Gear shift: ");
+      Serial.print(lastGear);
+      Serial.print(" -> ");
+      Serial.println(currentGear);
+    }
+  }
+
+  if (lastDRSAvailable == 0 && currentDRS == 1) {
+    playBuzzerBeep(100);
+    Serial.println("DRS Available!");
+  }
+
+  lastGear = currentGear;
+  lastDRSAvailable = currentDRS;
 }

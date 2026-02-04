@@ -1,54 +1,146 @@
 #include "Model.h"
-#include <Preferences.h>
 
 TelemetryModel::TelemetryModel() {
-  speed = 0;
-  gear = 0;
-  engineRPM = 0;
-  revLightsPercent = 0;
-
-  currentLapTimeMS = 0;
-  lastLapTimeMS = 0;
-  deltaTime = 0.0f;
-  currentLapNum = 0;
+  // ============================================
+  // PacketSessionData
+  // ============================================
+  weather = 0;
+  trackTemperature = 0;
+  airTemperature = 0;
+  sessionType = SESSION_UNKNOWN;
+  sessionTimeLeft = 0;
+  safetyCarStatus = 0;
+  pitStopWindowIdealLap = 0;
   totalLaps = 0;
 
+  // ============================================
+  // LapData
+  // ============================================
+  lastLapTimeMS = 0;
+  currentLapTimeMS = 0;
+  sector1TimeMS = 0;
+  sector2TimeMS = 0;
+  deltaToCarInFrontMS = 0;
+  deltaToRaceLeaderMS = 0;
+  safetyCarDelta = 0.0f;
   carPosition = 0;
-  totalCars = 22;
+  currentLapNum = 0;
+  cornerCuttingWarnings = 0;
 
-  sessionType = SESSION_UNKNOWN;
-  trackStatus = TRACK_GREEN;
+  // ============================================
+  // CarSetupData
+  // ============================================
+  diffOnThrottle = 50;
+  diffOffThrottle = 50;
 
+  // ============================================
+  // CarTelemetryData
+  // ============================================
+  speed = 0;
+  throttle = 0.0f;
+  brake = 0.0f;
+  gear = 0;
+  engineRPM = 0;
+  drs = 0;
+  revLightsPercent = 0;
+  revLightsBitValue = 0;
   engineTemp = 0;
+  suggestedGear = 0;
+
   for (uint8_t i = 0; i < 4; i++) {
     brakesTemp[i] = 0;
     tyresSurfaceTemp[i] = 0;
     tyresInnerTemp[i] = 0;
     tyresPressure[i] = 0.0f;
-    tyresWear[i] = 0.0f;
   }
 
+  // ============================================
+  // CarStatusData
+  // ============================================
+  frontBrakeBias = 50;
   fuelInTank = 0.0f;
-  fuelCapacity = 0.0f;
   fuelRemainingLaps = 0.0f;
+  tyresAgeLaps = 0;
+  enginePowerICE = 0.0f;
+  enginePowerMGUK = 0.0f;
   ersStoreEnergy = 0.0f;
   ersDeployMode = ERS_OFF;
 
-  drsAvailable = DRS_NOT_AVAILABLE;
-  drsActive = DRS_NOT_AVAILABLE;
+  // ============================================
+  // CarDamageData
+  // ============================================
+  for (uint8_t i = 0; i < 4; i++) {
+    tyresWear[i] = 0.0f;
+    tyresDamage[i] = 0;
+    brakesDamage[i] = 0;
+  }
 
-  frontWingDamage = 0;
+  frontLeftWingDamage = 0;
+  frontRightWingDamage = 0;
   rearWingDamage = 0;
+  floorDamage = 0;
+  diffuserDamage = 0;
+  sidepodDamage = 0;
+  drsFault = 0;
+  ersFault = 0;
+  gearBoxDamage = 0;
   engineDamage = 0;
+  engineMGUHWear = 0;
+  engineESWear = 0;
+  engineCEWear = 0;
+  engineICEWear = 0;
+  engineMGUKWear = 0;
+  engineTCWear = 0;
+  engineBlown = 0;
+  engineSeized = 0;
 
-  currentScreen = SCREEN_RACING_HUD;
-  inConfigMode = false;
-
+  // ============================================
+  // Utility
+  // ============================================
   packetsReceived = 0;
-  lastPacketTime = 0;
-  connected = false;
+}
 
-  loadSettings();
+// ============================================
+// UPDATE METHODS
+// ============================================
+
+void TelemetryModel::updateSessionData(const PacketSessionData* packet) {
+  if (!packet) return;
+
+  weather = packet->m_weather;
+  trackTemperature = packet->m_trackTemperature;
+  airTemperature = packet->m_airTemperature;
+  sessionType = packet->m_sessionType;
+  sessionTimeLeft = packet->m_sessionTimeLeft;
+  safetyCarStatus = packet->m_safetyCarStatus;
+  pitStopWindowIdealLap = packet->m_pitStopWindowIdealLap;
+  totalLaps = packet->m_totalLaps;
+}
+
+void TelemetryModel::updateLapData(const PacketLapData* packet, uint8_t playerIndex) {
+  if (!packet || playerIndex >= MAX_CARS) return;
+
+  const LapData* data = &packet->m_lapData[playerIndex];
+
+  lastLapTimeMS = data->m_lastLapTimeInMS;
+  currentLapTimeMS = data->m_currentLapTimeInMS;
+  sector1TimeMS = data->m_sector1TimeInMS;
+  sector2TimeMS = data->m_sector2TimeInMS;
+  deltaToCarInFrontMS = data->m_deltaToCarInFrontInMS;
+  deltaToRaceLeaderMS = data->m_deltaToRaceLeaderInMS;
+  safetyCarDelta = data->m_safetyCarDelta;
+  carPosition = data->m_carPosition;
+  currentLapNum = data->m_currentLapNum;
+  cornerCuttingWarnings = data->m_cornerCuttingWarnings;
+}
+
+void TelemetryModel::updateCarSetup(const PacketCarSetupData* packet, uint8_t playerIndex) {
+  if (!packet || playerIndex >= MAX_CARS) return;
+
+  const CarSetupData* data = &packet->m_carSetups[playerIndex];
+
+  diffOnThrottle = data->m_onThrottle;
+  diffOffThrottle = data->m_offThrottle;
 }
 
 void TelemetryModel::updateTelemetry(const PacketCarTelemetryData* packet, uint8_t playerIndex) {
@@ -57,12 +149,16 @@ void TelemetryModel::updateTelemetry(const PacketCarTelemetryData* packet, uint8
   const CarTelemetryData* data = &packet->m_carTelemetryData[playerIndex];
 
   speed = data->m_speed;
+  throttle = data->m_throttle;
+  brake = data->m_brake;
   gear = data->m_gear;
   engineRPM = data->m_engineRPM;
+  drs = data->m_drs;
   revLightsPercent = data->m_revLightsPercent;
-  drsActive = data->m_drs;
-
+  revLightsBitValue = data->m_revLightsBitValue;
   engineTemp = data->m_engineTemperature;
+  suggestedGear = packet->m_suggestedGear;
+
   for (uint8_t i = 0; i < 4; i++) {
     brakesTemp[i] = data->m_brakesTemperature[i];
     tyresSurfaceTemp[i] = data->m_tyresSurfaceTemperature[i];
@@ -71,20 +167,6 @@ void TelemetryModel::updateTelemetry(const PacketCarTelemetryData* packet, uint8
   }
 
   packetsReceived++;
-  lastPacketTime = millis();
-  connected = true;
-}
-
-void TelemetryModel::updateLapData(const PacketLapData* packet, uint8_t playerIndex) {
-  if (!packet || playerIndex >= MAX_CARS) return;
-
-  const LapData* data = &packet->m_lapData[playerIndex];
-
-  currentLapTimeMS = data->m_currentLapTimeInMS;
-  lastLapTimeMS = data->m_lastLapTimeInMS;
-  deltaTime = data->m_safetyCarDelta;
-  currentLapNum = data->m_currentLapNum;
-  carPosition = data->m_carPosition;
 }
 
 void TelemetryModel::updateCarStatus(const PacketCarStatusData* packet, uint8_t playerIndex) {
@@ -92,12 +174,14 @@ void TelemetryModel::updateCarStatus(const PacketCarStatusData* packet, uint8_t 
 
   const CarStatusData* data = &packet->m_carStatusData[playerIndex];
 
+  frontBrakeBias = data->m_frontBrakeBias;
   fuelInTank = data->m_fuelInTank;
-  fuelCapacity = data->m_fuelCapacity;
   fuelRemainingLaps = data->m_fuelRemainingLaps;
+  tyresAgeLaps = data->m_tyresAgeLaps;
+  enginePowerICE = data->m_enginePowerICE;
+  enginePowerMGUK = data->m_enginePowerMGUK;
   ersStoreEnergy = data->m_ersStoreEnergy;
   ersDeployMode = data->m_ersDeployMode;
-  drsAvailable = data->m_drsAllowed;
 }
 
 void TelemetryModel::updateCarDamage(const PacketCarDamageData* packet, uint8_t playerIndex) {
@@ -107,20 +191,33 @@ void TelemetryModel::updateCarDamage(const PacketCarDamageData* packet, uint8_t 
 
   for (uint8_t i = 0; i < 4; i++) {
     tyresWear[i] = data->m_tyresWear[i];
+    tyresDamage[i] = data->m_tyresDamage[i];
+    brakesDamage[i] = data->m_brakesDamage[i];
   }
 
-  frontWingDamage = (data->m_frontLeftWingDamage + data->m_frontRightWingDamage) / 2;
+  frontLeftWingDamage = data->m_frontLeftWingDamage;
+  frontRightWingDamage = data->m_frontRightWingDamage;
   rearWingDamage = data->m_rearWingDamage;
+  floorDamage = data->m_floorDamage;
+  diffuserDamage = data->m_diffuserDamage;
+  sidepodDamage = data->m_sidepodDamage;
+  drsFault = data->m_drsFault;
+  ersFault = data->m_ersFault;
+  gearBoxDamage = data->m_gearBoxDamage;
   engineDamage = data->m_engineDamage;
+  engineMGUHWear = data->m_engineMGUHWear;
+  engineESWear = data->m_engineESWear;
+  engineCEWear = data->m_engineCEWear;
+  engineICEWear = data->m_engineICEWear;
+  engineMGUKWear = data->m_engineMGUKWear;
+  engineTCWear = data->m_engineTCWear;
+  engineBlown = data->m_engineBlown;
+  engineSeized = data->m_engineSeized;
 }
 
-void TelemetryModel::updateSessionData(const PacketSessionData* packet) {
-  if (!packet) return;
-
-  totalLaps = packet->m_totalLaps;
-  sessionType = packet->m_sessionType;
-  trackStatus = packet->m_safetyCarStatus;
-}
+// ============================================
+// UTILITY
+// ============================================
 
 void TelemetryModel::formatLapTime(uint32_t timeMS, char* buffer) {
   uint32_t totalSeconds = timeMS / 1000;
@@ -129,85 +226,4 @@ void TelemetryModel::formatLapTime(uint32_t timeMS, char* buffer) {
   uint32_t millis = (timeMS % 1000) / 10;
 
   sprintf(buffer, "%d:%02d.%02d", minutes, seconds, millis);
-}
-
-void TelemetryModel::nextScreen() {
-  uint8_t nextScreen = (uint8_t)currentScreen + 1;
-  if (nextScreen >= SCREEN_CONFIG_MENU) nextScreen = 0;
-  currentScreen = (ScreenMode)nextScreen;
-}
-
-void TelemetryModel::previousScreen() {
-  if (currentScreen == 0) {
-    currentScreen = (ScreenMode)(SCREEN_CONFIG_MENU - 1);
-  } else {
-    currentScreen = (ScreenMode)((uint8_t)currentScreen - 1);
-  }
-}
-
-void TelemetryModel::loadSettings() {
-  Preferences prefs;
-  prefs.begin(PREFS_NAMESPACE, true);
-
-  settings.displayBrightness = prefs.getUChar(PREFS_KEY_BRIGHTNESS, DEFAULT_SETTINGS.displayBrightness);
-  settings.displayRotation = prefs.getUChar(PREFS_KEY_ROTATION, DEFAULT_SETTINGS.displayRotation);
-  settings.useMetricUnits = prefs.getBool(PREFS_KEY_UNITS, DEFAULT_SETTINGS.useMetricUnits);
-  settings.defaultScreen = prefs.getUChar(PREFS_KEY_DEFAULT_SCREEN, DEFAULT_SETTINGS.defaultScreen);
-
-  settings.buzzerVolume = prefs.getUChar(PREFS_KEY_BUZZER_VOL, DEFAULT_SETTINGS.buzzerVolume);
-  settings.shiftAlertEnabled = prefs.getBool(PREFS_KEY_SHIFT_ALERT, DEFAULT_SETTINGS.shiftAlertEnabled);
-  settings.drsAlertEnabled = prefs.getBool(PREFS_KEY_DRS_ALERT, DEFAULT_SETTINGS.drsAlertEnabled);
-  settings.warningAlertsEnabled = prefs.getBool(PREFS_KEY_WARN_ALERT, DEFAULT_SETTINGS.warningAlertsEnabled);
-
-  settings.ledBrightness = prefs.getUChar(PREFS_KEY_LED_BRIGHT, DEFAULT_SETTINGS.ledBrightness);
-  settings.ledRevStartPercent = prefs.getUChar(PREFS_KEY_LED_START, DEFAULT_SETTINGS.ledRevStartPercent);
-  settings.ledRevEndPercent = prefs.getUChar(PREFS_KEY_LED_END, DEFAULT_SETTINGS.ledRevEndPercent);
-
-  settings.wifiMode = prefs.getUChar(PREFS_KEY_WIFI_MODE, DEFAULT_SETTINGS.wifiMode);
-  prefs.getString(PREFS_KEY_WIFI_SSID, settings.wifiSSID, 32);
-  prefs.getString(PREFS_KEY_WIFI_PASS, settings.wifiPassword, 64);
-
-  if (settings.wifiSSID[0] == '\0') {
-    strcpy(settings.wifiSSID, DEFAULT_SETTINGS.wifiSSID);
-    strcpy(settings.wifiPassword, DEFAULT_SETTINGS.wifiPassword);
-  }
-
-  settings.gameVersion = prefs.getUChar(PREFS_KEY_GAME_VER, DEFAULT_SETTINGS.gameVersion);
-  settings.playerIndexOverride = prefs.getChar(PREFS_KEY_PLAYER_IDX, DEFAULT_SETTINGS.playerIndexOverride);
-
-  prefs.end();
-}
-
-void TelemetryModel::saveSettings() {
-  Preferences prefs;
-  prefs.begin(PREFS_NAMESPACE, false);
-
-  prefs.putUChar(PREFS_KEY_BRIGHTNESS, settings.displayBrightness);
-  prefs.putUChar(PREFS_KEY_ROTATION, settings.displayRotation);
-  prefs.putBool(PREFS_KEY_UNITS, settings.useMetricUnits);
-  prefs.putUChar(PREFS_KEY_DEFAULT_SCREEN, settings.defaultScreen);
-
-  prefs.putUChar(PREFS_KEY_BUZZER_VOL, settings.buzzerVolume);
-  prefs.putBool(PREFS_KEY_SHIFT_ALERT, settings.shiftAlertEnabled);
-  prefs.putBool(PREFS_KEY_DRS_ALERT, settings.drsAlertEnabled);
-  prefs.putBool(PREFS_KEY_WARN_ALERT, settings.warningAlertsEnabled);
-
-  prefs.putUChar(PREFS_KEY_LED_BRIGHT, settings.ledBrightness);
-  prefs.putUChar(PREFS_KEY_LED_START, settings.ledRevStartPercent);
-  prefs.putUChar(PREFS_KEY_LED_END, settings.ledRevEndPercent);
-
-  prefs.putUChar(PREFS_KEY_WIFI_MODE, settings.wifiMode);
-  prefs.putString(PREFS_KEY_WIFI_SSID, settings.wifiSSID);
-  prefs.putString(PREFS_KEY_WIFI_PASS, settings.wifiPassword);
-
-  prefs.putUChar(PREFS_KEY_GAME_VER, settings.gameVersion);
-  prefs.putChar(PREFS_KEY_PLAYER_IDX, settings.playerIndexOverride);
-
-  prefs.end();
-}
-
-void TelemetryModel::updateConnectionStatus() {
-  if (millis() - lastPacketTime > 2000) {
-    connected = false;
-  }
 }
