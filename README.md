@@ -111,3 +111,8 @@ The device must successfully connect to the local Wi-Fi network, receive data fr
 
 ### Q5 – Why is this not just a tutorial?
 This is not a tutorial-based project because the core problems do not have ready-made solutions. The system required understanding an official telemetry specification, decoding raw binary data, and designing a real-time embedded architecture.
+
+---
+
+### Video
+- **[Demo on YouTube](https://www.youtube.com/watch?v=81EvBYng5Us)**
