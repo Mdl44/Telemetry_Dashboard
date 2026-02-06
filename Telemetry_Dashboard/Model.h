@@ -14,7 +14,6 @@ class TelemetryModel {
   uint8_t sessionType;
   uint16_t sessionTimeLeft;
   uint8_t safetyCarStatus;
-  uint8_t pitStopWindowIdealLap;
   uint8_t totalLaps;
 
   // ============================================
@@ -26,16 +25,28 @@ class TelemetryModel {
   uint16_t sector2TimeMS;
   uint16_t deltaToCarInFrontMS;
   uint16_t deltaToRaceLeaderMS;
-  float safetyCarDelta;
   uint8_t carPosition;
   uint8_t currentLapNum;
   uint8_t cornerCuttingWarnings;
+  float lapDistance;
+  uint32_t bestLapTimeMS;
+
+#define MAX_REFERENCE_POINTS 300
+  struct ReferencePoint {
+    float distance;
+    uint32_t timeMS;
+  };
+  ReferencePoint referenceLap[MAX_REFERENCE_POINTS];
+  ReferencePoint currentRecording[MAX_REFERENCE_POINTS];
+  uint16_t referencePointCount;
+  uint16_t currentRecordingCount;
+  float trackLength;
+  bool hasReferenceLap;
 
   // ============================================
   // CarSetupData
   // ============================================
   uint8_t diffOnThrottle;
-  uint8_t diffOffThrottle;
 
   // ============================================
   // CarTelemetryData
@@ -47,7 +58,6 @@ class TelemetryModel {
   uint16_t engineRPM;
   uint8_t drs;
   uint8_t revLightsPercent;
-  uint16_t revLightsBitValue;
   uint16_t brakesTemp[4];
   uint8_t tyresSurfaceTemp[4];
   uint8_t tyresInnerTemp[4];
@@ -89,8 +99,6 @@ class TelemetryModel {
   uint8_t engineICEWear;
   uint8_t engineMGUKWear;
   uint8_t engineTCWear;
-  uint8_t engineBlown;
-  uint8_t engineSeized;
 
   // ============================================
   // Utility
@@ -128,9 +136,6 @@ public:
   uint8_t getSafetyCarStatus() const {
     return safetyCarStatus;
   }
-  uint8_t getPitStopWindowIdealLap() const {
-    return pitStopWindowIdealLap;
-  }
   uint8_t getTotalLaps() const {
     return totalLaps;
   }
@@ -156,9 +161,6 @@ public:
   uint16_t getDeltaToRaceLeaderMS() const {
     return deltaToRaceLeaderMS;
   }
-  float getSafetyCarDelta() const {
-    return safetyCarDelta;
-  }
   uint8_t getCarPosition() const {
     return carPosition;
   }
@@ -168,15 +170,51 @@ public:
   uint8_t getCornerCuttingWarnings() const {
     return cornerCuttingWarnings;
   }
+  uint32_t getBestLapTimeMS() const {
+    return bestLapTimeMS;
+  }
+
+  float getLapDistance() const {
+    return lapDistance;
+  }
+
+  float getDeltaLive() const {
+    if (!hasReferenceLap || bestLapTimeMS == 0 || referencePointCount < 2) {
+      return 0.0f;
+    }
+
+    if (lapDistance < 10.0f || currentLapTimeMS == 0) {
+      return 0.0f;
+    }
+
+    uint32_t referenceTimeMS = interpolateReferenceTime(lapDistance);
+    if (referenceTimeMS == 0) {
+      return 0.0f;
+    }
+
+    return ((int32_t)currentLapTimeMS - (int32_t)referenceTimeMS) / 1000.0f;
+  }
+
+private:
+  uint32_t interpolateReferenceTime(float distance) const {
+    if (referencePointCount < 2) return 0;
+
+    for (uint16_t i = 0; i < referencePointCount - 1; i++) {
+      if (distance >= referenceLap[i].distance && distance <= referenceLap[i + 1].distance) {
+        float ratio = (distance - referenceLap[i].distance) / (referenceLap[i + 1].distance - referenceLap[i].distance);
+        return referenceLap[i].timeMS + (uint32_t)(ratio * (referenceLap[i + 1].timeMS - referenceLap[i].timeMS));
+      }
+    }
+
+    return 0;
+  }
+public:
 
   // ============================================
   // Getters - CarSetupData
   // ============================================
   uint8_t getDiffOnThrottle() const {
     return diffOnThrottle;
-  }
-  uint8_t getDiffOffThrottle() const {
-    return diffOffThrottle;
   }
 
   // ============================================
@@ -202,9 +240,6 @@ public:
   }
   uint8_t getRevLightsPercent() const {
     return revLightsPercent;
-  }
-  uint16_t getRevLightsBitValue() const {
-    return revLightsBitValue;
   }
   uint16_t getBrakeTemp(uint8_t corner) const {
     return brakesTemp[corner];
@@ -245,9 +280,6 @@ public:
   }
   float getEnginePowerMGUK() const {
     return enginePowerMGUK;
-  }
-  float getERSStoreEnergy() const {
-    return ersStoreEnergy;
   }
   uint8_t getERSDeployMode() const {
     return ersDeployMode;
@@ -315,12 +347,6 @@ public:
   }
   uint8_t getEngineTCWear() const {
     return engineTCWear;
-  }
-  uint8_t getEngineBlown() const {
-    return engineBlown;
-  }
-  uint8_t getEngineSeized() const {
-    return engineSeized;
   }
 
   // ============================================

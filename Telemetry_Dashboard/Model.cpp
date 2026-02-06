@@ -10,7 +10,6 @@ TelemetryModel::TelemetryModel() {
   sessionType = SESSION_UNKNOWN;
   sessionTimeLeft = 0;
   safetyCarStatus = 0;
-  pitStopWindowIdealLap = 0;
   totalLaps = 0;
 
   // ============================================
@@ -22,16 +21,20 @@ TelemetryModel::TelemetryModel() {
   sector2TimeMS = 0;
   deltaToCarInFrontMS = 0;
   deltaToRaceLeaderMS = 0;
-  safetyCarDelta = 0.0f;
   carPosition = 0;
   currentLapNum = 0;
   cornerCuttingWarnings = 0;
+  bestLapTimeMS = 0;
+  lapDistance = 0.0f;
+  referencePointCount = 0;
+  currentRecordingCount = 0;
+  trackLength = 0.0f;
+  hasReferenceLap = false;
 
   // ============================================
   // CarSetupData
   // ============================================
   diffOnThrottle = 50;
-  diffOffThrottle = 50;
 
   // ============================================
   // CarTelemetryData
@@ -43,7 +46,6 @@ TelemetryModel::TelemetryModel() {
   engineRPM = 0;
   drs = 0;
   revLightsPercent = 0;
-  revLightsBitValue = 0;
   engineTemp = 0;
   suggestedGear = 0;
 
@@ -64,7 +66,7 @@ TelemetryModel::TelemetryModel() {
   enginePowerICE = 0.0f;
   enginePowerMGUK = 0.0f;
   ersStoreEnergy = 0.0f;
-  ersDeployMode = ERS_OFF;
+  ersDeployMode = 0;
 
   // ============================================
   // CarDamageData
@@ -91,8 +93,6 @@ TelemetryModel::TelemetryModel() {
   engineICEWear = 0;
   engineMGUKWear = 0;
   engineTCWear = 0;
-  engineBlown = 0;
-  engineSeized = 0;
 
   // ============================================
   // Utility
@@ -113,7 +113,6 @@ void TelemetryModel::updateSessionData(const PacketSessionData* packet) {
   sessionType = packet->m_sessionType;
   sessionTimeLeft = packet->m_sessionTimeLeft;
   safetyCarStatus = packet->m_safetyCarStatus;
-  pitStopWindowIdealLap = packet->m_pitStopWindowIdealLap;
   totalLaps = packet->m_totalLaps;
 }
 
@@ -128,10 +127,48 @@ void TelemetryModel::updateLapData(const PacketLapData* packet, uint8_t playerIn
   sector2TimeMS = data->m_sector2TimeInMS;
   deltaToCarInFrontMS = data->m_deltaToCarInFrontInMS;
   deltaToRaceLeaderMS = data->m_deltaToRaceLeaderInMS;
-  safetyCarDelta = data->m_safetyCarDelta;
   carPosition = data->m_carPosition;
   currentLapNum = data->m_currentLapNum;
   cornerCuttingWarnings = data->m_cornerCuttingWarnings;
+
+  float prevLapDistance = lapDistance;
+  lapDistance = data->m_lapDistance;
+
+  bool lapFinished = (lapDistance < 100.0f && prevLapDistance > 100.0f);
+
+  if (lapFinished) {
+    if (lastLapTimeMS > 0) {
+      if (bestLapTimeMS == 0 || lastLapTimeMS < bestLapTimeMS) {
+        bestLapTimeMS = lastLapTimeMS;
+        hasReferenceLap = true;
+        trackLength = prevLapDistance;
+        for (uint16_t i = 0; i < currentRecordingCount; i++) {
+          referenceLap[i] = currentRecording[i];
+        }
+        referencePointCount = currentRecordingCount;
+      }
+    }
+    currentRecordingCount = 0;
+  }
+
+  if (currentRecordingCount < MAX_REFERENCE_POINTS && currentLapTimeMS > 0 && lapDistance > 0) {
+    bool shouldRecord = false;
+
+    if (currentRecordingCount == 0 && lapDistance > 20.0f) {
+      shouldRecord = true;
+    } else if (currentRecordingCount > 0) {
+      float lastRecordedDist = currentRecording[currentRecordingCount - 1].distance;
+      if (lapDistance - lastRecordedDist >= 20.0f) {
+        shouldRecord = true;
+      }
+    }
+
+    if (shouldRecord) {
+      currentRecording[currentRecordingCount].distance = lapDistance;
+      currentRecording[currentRecordingCount].timeMS = currentLapTimeMS;
+      currentRecordingCount++;
+    }
+  }
 }
 
 void TelemetryModel::updateCarSetup(const PacketCarSetupData* packet, uint8_t playerIndex) {
@@ -140,7 +177,6 @@ void TelemetryModel::updateCarSetup(const PacketCarSetupData* packet, uint8_t pl
   const CarSetupData* data = &packet->m_carSetups[playerIndex];
 
   diffOnThrottle = data->m_onThrottle;
-  diffOffThrottle = data->m_offThrottle;
 }
 
 void TelemetryModel::updateTelemetry(const PacketCarTelemetryData* packet, uint8_t playerIndex) {
@@ -155,7 +191,6 @@ void TelemetryModel::updateTelemetry(const PacketCarTelemetryData* packet, uint8
   engineRPM = data->m_engineRPM;
   drs = data->m_drs;
   revLightsPercent = data->m_revLightsPercent;
-  revLightsBitValue = data->m_revLightsBitValue;
   engineTemp = data->m_engineTemperature;
   suggestedGear = packet->m_suggestedGear;
 
@@ -211,8 +246,6 @@ void TelemetryModel::updateCarDamage(const PacketCarDamageData* packet, uint8_t 
   engineICEWear = data->m_engineICEWear;
   engineMGUKWear = data->m_engineMGUKWear;
   engineTCWear = data->m_engineTCWear;
-  engineBlown = data->m_engineBlown;
-  engineSeized = data->m_engineSeized;
 }
 
 // ============================================

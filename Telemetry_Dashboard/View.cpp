@@ -1,24 +1,25 @@
 #include "View.h"
 
+// ============================================
+// CONSTRUCTOR
+// ============================================
 TelemetryView::TelemetryView(Adafruit_ILI9341* display, Adafruit_NeoPixel* leds, TelemetryModel* m) {
   tft = display;
   pixels = leds;
   model = m;
 
-  // ============================================
   // Screen Management
-  // ============================================
   currentScreen = SCREEN_GENERAL;
   screenChanged = true;
   bootInfoDrawn = false;
 
   // ============================================
-  // Initialize Dirty Tracking - General Screen
+  // SCREEN 1: GENERAL - Initialize Dirty Tracking
   // ============================================
   lastPosition = 255;
   lastDeltaFront = 65535;
   lastDeltaLeader = 65535;
-  lastSafetyCarDelta = -999.0f;
+  lastDeltaLive = -999.0f;
   lastLapTime = 0;
   lastCurrentLapTime = 0;
   lastSector1 = 65535;
@@ -31,12 +32,13 @@ TelemetryView::TelemetryView(Adafruit_ILI9341* display, Adafruit_NeoPixel* leds,
   lastBrake = -999.0f;
   lastGear = -99;
   lastRPM = 65535;
+
   lastDRS = 255;
   lastRevLightsPercent = 255;
   lastSuggestedGear = -99;
-
   lastFrontBrakeBias = 255;
   lastDiffOnThrottle = 255;
+
   lastFuelInTank = -999.0f;
   lastFuelRemainingLaps = -999.0f;
   lastERSEnergy = -999.0f;
@@ -45,71 +47,97 @@ TelemetryView::TelemetryView(Adafruit_ILI9341* display, Adafruit_NeoPixel* leds,
   lastLedsOn = 255;
 
   // ============================================
-  // Initialize Dirty Tracking - Car Info Screen
+  // SCREEN 2: TYRE INFO - Initialize Dirty Tracking
   // ============================================
+  lastTyresAgeLaps = 255;
+
   lastBrakeTempFL = 65535;
   lastBrakeTempFR = 65535;
   lastBrakeTempRL = 65535;
   lastBrakeTempRR = 65535;
+
   lastTyreSurfTempFL = 255;
   lastTyreSurfTempFR = 255;
   lastTyreSurfTempRL = 255;
   lastTyreSurfTempRR = 255;
+
   lastTyreInnerTempFL = 255;
   lastTyreInnerTempFR = 255;
   lastTyreInnerTempRL = 255;
   lastTyreInnerTempRR = 255;
-  lastEngineTemp = 65535;
-  lastTyrePressureFL = -999.0f;
-  lastTyrePressureFR = -999.0f;
-  lastTyrePressureRL = -999.0f;
-  lastTyrePressureRR = -999.0f;
-  lastTyresAgeLaps = 255;
 
-  lastTyreWearFL = -999.0f;
-  lastTyreWearFR = -999.0f;
-  lastTyreWearRL = -999.0f;
-  lastTyreWearRR = -999.0f;
+  lastTyrePressureFL = -1.0f;
+  lastTyrePressureFR = -1.0f;
+  lastTyrePressureRL = -1.0f;
+  lastTyrePressureRR = -1.0f;
+
+  lastTyreWearFL = -1.0f;
+  lastTyreWearFR = -1.0f;
+  lastTyreWearRL = -1.0f;
+  lastTyreWearRR = -1.0f;
+
   lastTyreDamageFL = 255;
   lastTyreDamageFR = 255;
   lastTyreDamageRL = 255;
   lastTyreDamageRR = 255;
+
   lastBrakeDamageFL = 255;
   lastBrakeDamageFR = 255;
   lastBrakeDamageRL = 255;
   lastBrakeDamageRR = 255;
-  lastFrontLeftWingDamage = 255;
-  lastFrontRightWingDamage = 255;
-  lastRearWingDamage = 255;
+
+  // ============================================
+  // SCREEN 3: CAR INFO - Initialize Dirty Tracking
+  // ============================================
+  lastICEPower = -1.0f;
+  lastMGUKPower = -1.0f;
+  lastERSPercent = -1.0f;
+  lastEngineTemp = 65535;
+  lastDRSFault = 255;
+  lastERSFault = 255;
+
+  lastWingDamageFL = 255;
+  lastWingDamageFR = 255;
+  lastWingDamageRear = 255;
   lastFloorDamage = 255;
   lastDiffuserDamage = 255;
   lastSidepodDamage = 255;
-  lastDRSFault = 255;
-  lastERSFault = 255;
-  lastGearBoxDamage = 255;
-  lastEngineDamage = 255;
-  lastEngineMGUHWear = 255;
-  lastEngineESWear = 255;
-  lastEngineCEWear = 255;
-  lastEngineICEWear = 255;
-  lastEngineMGUKWear = 255;
-  lastEngineTCWear = 255;
-  lastEngineBlown = 255;
-  lastEngineSeized = 255;
+
+  lastGearboxDamage = 255;
+  lastICEDamage = 255;
+  lastMGUHDamage = 255;
+  lastMGUKDamage = 255;
+  lastTCDamage = 255;
+  lastERSDamage = 255;
+  lastCEDamage = 255;
 
   // ============================================
-  // Initialize Dirty Tracking - Session Info Screen
+  // SCREEN 4: RACE OVERVIEW - Initialize Dirty Tracking
   // ============================================
   lastWeather = 255;
   lastTrackTemp = -99;
   lastAirTemp = -99;
+
   lastSessionType = 255;
+  lastCurrentLapInfo = 255;
+  lastTotalLaps = 255;
   lastSessionTimeLeft = 65535;
   lastSafetyCarStatus = 255;
-  lastPitStopWindowIdealLap = 255;
-  lastTotalLaps = 255;
+
+  lastBestLapTime = 0;
+  lastLastLapTime = 0;
+  lastSector1Time = 65535;
+  lastSector2Time = 65535;
+
+  lastFuelRemaining = -1.0f;
+  lastTyresAge = 255;
+  lastEngineTempCritical = 65535;
+  lastOverallDamage = 255;
 }
 
+// ============================================
+// INIT
+// ============================================
 void TelemetryView::init() {
   tft->begin();
   tft->setRotation(DISPLAY_ROTATION);
@@ -121,6 +149,9 @@ void TelemetryView::init() {
   pixels->show();
 }
 
+// ============================================
+// RENDER - Main Loop
+// ============================================
 void TelemetryView::render() {
   switch (currentScreen) {
     case SCREEN_GENERAL:
@@ -132,7 +163,7 @@ void TelemetryView::render() {
       updatePosition();
       updateDeltaFront();
       updateDeltaLeader();
-      updateSafetyCarDelta();
+      updateDeltaLive();
       updateLastLapTime();
       updateCurrentLapTime();
       updateSector1();
@@ -161,11 +192,11 @@ void TelemetryView::render() {
         resetTyreInfoDirtyTracking();
         screenChanged = false;
       }
+      updateTyresAgeLaps();
       updateBrakeTemps();
       updateTyreSurfaceTemps();
       updateTyreInnerTemps();
       updateTyrePressures();
-      updateTyresAgeLaps();
       updateTyreWear();
       updateTyreDamage();
       updateBrakeDamage();
@@ -177,11 +208,9 @@ void TelemetryView::render() {
         resetCarInfoDirtyTracking();
         screenChanged = false;
       }
-      updateEngineTemp();
-      updateWingDamage();
+      updatePowerUnit();
       updateAeroDamage();
-      updatePowertrainDamage();
-      updateCriticalDamage();
+      updateComponentWear();
       break;
 
     case SCREEN_SESSION_INFO:
@@ -193,11 +222,20 @@ void TelemetryView::render() {
       updateWeather();
       updateTrackTemp();
       updateAirTemp();
+
       updateSessionType();
+      updateLapInfo();
       updateSessionTimeLeft();
       updateSafetyCarStatus();
-      updatePitStopWindow();
-      updateTotalLaps();
+
+      updateBestLap();
+      updateLastLap();
+      updateSectorTimes();
+
+      updateFuelStatus();
+      updateTyreStatus();
+      updateEngineStatus();
+      updateDamageStatus();
       break;
   }
   updateLEDs();
@@ -213,11 +251,6 @@ void TelemetryView::nextScreen() {
   screenChanged = true;
 }
 
-void TelemetryView::previousScreen() {
-  currentScreen = (Screen)((currentScreen + 3) % 4);
-  screenChanged = true;
-}
-
 // ============================================
 // SCREEN DRAWING METHODS
 // ============================================
@@ -225,257 +258,186 @@ void TelemetryView::previousScreen() {
 void TelemetryView::drawGeneralScreen() {
   tft->fillScreen(COLOR_BLACK);
 
-  tft->fillRect(0, 0, 320, 20, COLOR_RED);
-  tft->setTextSize(2);
-  tft->setTextColor(COLOR_WHITE);
-  tft->setCursor(60, 3);
-  tft->print("GENERAL (1/4)");
+  tft->drawRect(0, 0, 40, 240, COLOR_WHITE);
 
-  tft->setTextSize(1);
-  tft->setTextColor(COLOR_DARKGREY);
+  tft->drawRect(280, 0, 40, 240, COLOR_WHITE);
 
-  int y = 25;
-  tft->setCursor(5, y);
-  tft->print("Position:");
-  tft->setCursor(5, y += 15);
-  tft->print("Gap Front:");
-  tft->setCursor(5, y += 15);
-  tft->print("Gap Leader:");
-  tft->setCursor(5, y += 15);
-  tft->print("Safety Delta:");
-  tft->setCursor(5, y += 15);
-  tft->print("Last Lap:");
-  tft->setCursor(5, y += 15);
-  tft->print("Curr Lap:");
-  tft->setCursor(5, y += 15);
-  tft->print("Sector 1:");
-  tft->setCursor(5, y += 15);
-  tft->print("Sector 2:");
-  tft->setCursor(5, y += 15);
-  tft->print("Lap Num:");
-  tft->setCursor(5, y += 15);
-  tft->print("Warnings:");
+  for (int i = 0; i < 9; i++) {
+    tft->drawRect(42, i * 24, 68, 24, COLOR_WHITE);
+  }
 
-  y = 25;
-  tft->setCursor(165, y);
-  tft->print("Speed:");
-  tft->setCursor(165, y += 15);
-  tft->print("Throttle:");
-  tft->setCursor(165, y += 15);
-  tft->print("Brake:");
-  tft->setCursor(165, y += 15);
-  tft->print("Gear:");
-  tft->setCursor(165, y += 15);
-  tft->print("RPM:");
-  tft->setCursor(165, y += 15);
-  tft->print("DRS:");
-  tft->setCursor(165, y += 15);
-  tft->print("Rev:");
-  tft->setCursor(165, y += 15);
-  tft->print("Sug Gear:");
-  tft->setCursor(165, y += 15);
-  tft->print("Brake Bias:");
-  tft->setCursor(165, y += 15);
-  tft->print("Diff:");
-  tft->setCursor(165, y += 15);
-  tft->print("Fuel Tank:");
-  tft->setCursor(165, y += 15);
-  tft->print("Fuel Laps:");
-  tft->setCursor(165, y += 15);
-  tft->print("ERS:");
-  tft->setCursor(165, y += 15);
-  tft->print("ERS Mode:");
+  tft->drawRect(112, 0, 76, 24, COLOR_WHITE);
+  tft->drawRect(112, 24, 76, 96, COLOR_WHITE);
+  tft->drawRect(112, 120, 76, 96, COLOR_WHITE);
+
+  for (int i = 0; i < 9; i++) {
+    tft->drawRect(190, i * 24, 88, 24, COLOR_WHITE);
+  }
+
+  tft->drawRect(42, 216, 236, 24, COLOR_WHITE);
 }
 
 void TelemetryView::drawTyreInfoScreen() {
   tft->fillScreen(COLOR_BLACK);
 
-  tft->fillRect(0, 0, 320, 20, COLOR_CYAN);
-  tft->setTextSize(2);
-  tft->setTextColor(COLOR_BLACK);
-  tft->setCursor(30, 3);
-  tft->print("TYRE & BRAKE (2/4)");
+  tft->drawRect(0, 0, 320, 24, COLOR_WHITE);
+
+  tft->drawRect(0, 24, 160, 108, COLOR_WHITE);
+  tft->drawRect(160, 24, 160, 108, COLOR_WHITE);
+  tft->drawRect(0, 132, 160, 108, COLOR_WHITE);
+  tft->drawRect(160, 132, 160, 108, COLOR_WHITE);
 
   tft->setTextSize(1);
-  tft->setTextColor(COLOR_DARKGREY);
 
-  tft->setCursor(5, 25);
-  tft->print("--- FRONT LEFT ---");
-  tft->setCursor(5, 37);
-  tft->print("Brake:");
-  tft->setCursor(5, 49);
-  tft->print("Surf:");
-  tft->setCursor(5, 61);
-  tft->print("Inner:");
-  tft->setCursor(5, 73);
-  tft->print("Press:");
-  tft->setCursor(5, 85);
-  tft->print("Wear:");
-  tft->setCursor(5, 97);
-  tft->print("Dmg T:");
-  tft->setCursor(5, 109);
-  tft->print("Dmg B:");
+  tft->setTextColor(COLOR_CYAN);
+  tft->setCursor(30, 28);
+  tft->print("FRONT LEFT");
 
-  tft->setCursor(165, 25);
-  tft->print("--- FRONT RIGHT ---");
-  tft->setCursor(165, 37);
-  tft->print("Brake:");
-  tft->setCursor(165, 49);
-  tft->print("Surf:");
-  tft->setCursor(165, 61);
-  tft->print("Inner:");
-  tft->setCursor(165, 73);
-  tft->print("Press:");
-  tft->setCursor(165, 85);
-  tft->print("Wear:");
-  tft->setCursor(165, 97);
-  tft->print("Dmg T:");
-  tft->setCursor(165, 109);
-  tft->print("Dmg B:");
+  tft->setCursor(190, 28);
+  tft->print("FRONT RIGHT");
 
-  tft->setCursor(5, 130);
-  tft->print("--- REAR LEFT ---");
-  tft->setCursor(5, 142);
-  tft->print("Brake:");
-  tft->setCursor(5, 154);
-  tft->print("Surf:");
-  tft->setCursor(5, 166);
-  tft->print("Inner:");
-  tft->setCursor(5, 178);
-  tft->print("Press:");
-  tft->setCursor(5, 190);
-  tft->print("Wear:");
-  tft->setCursor(5, 202);
-  tft->print("Dmg T:");
-  tft->setCursor(5, 214);
-  tft->print("Dmg B:");
+  tft->setCursor(35, 136);
+  tft->print("REAR LEFT");
 
-  tft->setCursor(165, 130);
-  tft->print("--- REAR RIGHT ---");
-  tft->setCursor(165, 142);
-  tft->print("Brake:");
-  tft->setCursor(165, 154);
-  tft->print("Surf:");
-  tft->setCursor(165, 166);
-  tft->print("Inner:");
-  tft->setCursor(165, 178);
-  tft->print("Press:");
-  tft->setCursor(165, 190);
-  tft->print("Wear:");
-  tft->setCursor(165, 202);
-  tft->print("Dmg T:");
-  tft->setCursor(165, 214);
-  tft->print("Dmg B:");
-
-  tft->setCursor(100, 227);
-  tft->print("Age:");
+  tft->setCursor(190, 136);
+  tft->print("REAR RIGHT");
 }
 
 void TelemetryView::drawCarInfoScreen() {
   tft->fillScreen(COLOR_BLACK);
 
-  tft->fillRect(0, 0, 320, 20, COLOR_ORANGE);
-  tft->setTextSize(2);
-  tft->setTextColor(COLOR_BLACK);
-  tft->setCursor(30, 3);
-  tft->print("CAR DAMAGE (3/4)");
-
+  tft->drawRect(2, 2, 156, 104, COLOR_CYAN);
   tft->setTextSize(1);
+  tft->setTextColor(COLOR_CYAN);
+  tft->setCursor(40, 8);
+  tft->print("POWER UNIT");
+
   tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(8, 25);
+  tft->print("ICE:");
+  tft->setCursor(8, 40);
+  tft->print("MGU-K:");
+  tft->setCursor(8, 55);
+  tft->print("ERS:");
+  tft->setCursor(8, 70);
+  tft->print("TEMP:");
+  tft->setCursor(8, 85);
+  tft->print("STATUS:");
 
-  int y = 25;
-  tft->setCursor(5, y);
-  tft->print("--- ENGINE ---");
-  tft->setCursor(5, y += 12);
-  tft->print("Temp:");
-  tft->setCursor(5, y += 12);
-  tft->print("Damage:");
-  tft->setCursor(5, y += 12);
-  tft->print("Blown:");
-  tft->setCursor(5, y += 12);
-  tft->print("Seized:");
+  tft->drawRect(162, 2, 156, 104, COLOR_ORANGE);
+  tft->setTextColor(COLOR_ORANGE);
+  tft->setCursor(185, 8);
+  tft->print("AERODYNAMICS");
 
-  tft->setCursor(5, y += 15);
-  tft->print("--- AERO ---");
-  tft->setCursor(5, y += 12);
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(168, 25);
   tft->print("Wing FL:");
-  tft->setCursor(5, y += 12);
+  tft->setCursor(168, 37);
   tft->print("Wing FR:");
-  tft->setCursor(5, y += 12);
-  tft->print("Wing Rear:");
-  tft->setCursor(5, y += 12);
+  tft->setCursor(168, 49);
+  tft->print("Rear Wing:");
+  tft->setCursor(168, 61);
   tft->print("Floor:");
-  tft->setCursor(5, y += 12);
+  tft->setCursor(168, 73);
   tft->print("Diffuser:");
-  tft->setCursor(5, y += 12);
+  tft->setCursor(168, 85);
   tft->print("Sidepod:");
 
-  y = 25;
-  tft->setCursor(165, y);
-  tft->print("--- POWERTRAIN ---");
-  tft->setCursor(165, y += 12);
-  tft->print("Gearbox:");
-  tft->setCursor(165, y += 12);
-  tft->print("ICE:");
-  tft->setCursor(165, y += 12);
-  tft->print("MGUH:");
-  tft->setCursor(165, y += 12);
-  tft->print("MGUK:");
-  tft->setCursor(165, y += 12);
-  tft->print("ES:");
-  tft->setCursor(165, y += 12);
-  tft->print("CE:");
-  tft->setCursor(165, y += 12);
-  tft->print("TC:");
+  tft->drawRect(2, 110, 316, 128, COLOR_MAGENTA);
+  tft->setTextColor(COLOR_MAGENTA);
+  tft->setCursor(70, 116);
+  tft->print("COMPONENT WEAR");
 
-  tft->setCursor(165, y += 15);
-  tft->print("--- SYSTEMS ---");
-  tft->setCursor(165, y += 12);
-  tft->print("DRS:");
-  tft->setCursor(165, y += 12);
-  tft->print("ERS:");
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(8, 130);
+  tft->print("Gearbox:");
+  tft->setCursor(8, 145);
+  tft->print("ICE:");
+  tft->setCursor(8, 160);
+  tft->print("MGU-H:");
+  tft->setCursor(8, 175);
+  tft->print("MGU-K:");
+  tft->setCursor(8, 190);
+  tft->print("TC:");
+  tft->setCursor(8, 205);
+  tft->print("ES:");
+  tft->setCursor(8, 220);
+  tft->print("CE:");
 }
 
 void TelemetryView::drawSessionInfoScreen() {
   tft->fillScreen(COLOR_BLACK);
 
-  tft->fillRect(0, 0, 320, 20, COLOR_RED);
-  tft->setTextSize(2);
-  tft->setTextColor(COLOR_WHITE);
-  tft->setCursor(35, 3);
-  tft->print("SESSION INFO (4/4)");
-
+  tft->drawRect(2, 2, 156, 75, COLOR_CYAN);
   tft->setTextSize(1);
-  tft->setTextColor(COLOR_DARKGREY);
+  tft->setTextColor(COLOR_CYAN);
+  tft->setCursor(38, 8);
+  tft->print("CONDITIONS");
 
-  int y = 40;
-  tft->setCursor(20, y);
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(8, 25);
   tft->print("Weather:");
-  tft->setCursor(20, y += 20);
-  tft->print("Track Temp:");
-  tft->setCursor(20, y += 20);
-  tft->print("Air Temp:");
-  tft->setCursor(20, y += 20);
-  tft->print("Session Type:");
-  tft->setCursor(20, y += 20);
-  tft->print("Time Left:");
-  tft->setCursor(20, y += 20);
-  tft->print("Safety Car:");
-  tft->setCursor(20, y += 20);
-  tft->print("Pit Window:");
-  tft->setCursor(20, y += 20);
-  tft->print("Total Laps:");
+  tft->setCursor(8, 42);
+  tft->print("Track:");
+  tft->setCursor(8, 59);
+  tft->print("Air:");
+
+  tft->drawRect(162, 2, 156, 75, COLOR_MAGENTA);
+  tft->setTextColor(COLOR_MAGENTA);
+  tft->setCursor(205, 8);
+  tft->print("SESSION");
+
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(168, 25);
+  tft->print("Type:");
+  tft->setCursor(168, 37);
+  tft->print("Lap:");
+  tft->setCursor(168, 49);
+  tft->print("Time:");
+  tft->setCursor(168, 61);
+  tft->print("SC:");
+
+  tft->drawRect(2, 81, 316, 75, COLOR_ORANGE);
+  tft->setTextColor(COLOR_ORANGE);
+  tft->setCursor(88, 87);
+  tft->print("LAP PERFORMANCE");
+
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(8, 105);
+  tft->print("Best Lap:");
+  tft->setCursor(8, 127);
+  tft->print("Last Lap:");
+
+  tft->setCursor(165, 105);
+  tft->print("Sector 1:");
+  tft->setCursor(165, 127);
+  tft->print("Sector 2:");
+
+  tft->drawRect(2, 160, 316, 78, COLOR_YELLOW);
+  tft->setTextColor(COLOR_YELLOW);
+  tft->setCursor(85, 166);
+  tft->print("VEHICLE STATUS");
+
+  tft->setTextColor(COLOR_DARKGREY);
+  tft->setCursor(8, 181);
+  tft->print("Fuel:");
+  tft->setCursor(8, 196);
+  tft->print("Tyres:");
+  tft->setCursor(8, 211);
+  tft->print("Engine:");
+  tft->setCursor(8, 226);
+  tft->print("Damage:");
 }
 
 // ============================================
-// DIRTY TRACKING RESET METHODS
+// RESET DIRTY TRACKING METHODS
 // ============================================
 
 void TelemetryView::resetGeneralDirtyTracking() {
   lastPosition = 255;
   lastDeltaFront = 65535;
   lastDeltaLeader = 65535;
-  lastSafetyCarDelta = -999.0f;
+  lastDeltaLive = -999.0f;
   lastLapTime = 0;
   lastCurrentLapTime = 0;
   lastSector1 = 65535;
@@ -488,12 +450,13 @@ void TelemetryView::resetGeneralDirtyTracking() {
   lastBrake = -999.0f;
   lastGear = -99;
   lastRPM = 65535;
+
   lastDRS = 255;
   lastRevLightsPercent = 255;
   lastSuggestedGear = -99;
-
   lastFrontBrakeBias = 255;
   lastDiffOnThrottle = 255;
+
   lastFuelInTank = -999.0f;
   lastFuelRemainingLaps = -999.0f;
   lastERSEnergy = -999.0f;
@@ -503,32 +466,38 @@ void TelemetryView::resetGeneralDirtyTracking() {
 }
 
 void TelemetryView::resetTyreInfoDirtyTracking() {
+  lastTyresAgeLaps = 255;
+
   lastBrakeTempFL = 65535;
   lastBrakeTempFR = 65535;
   lastBrakeTempRL = 65535;
   lastBrakeTempRR = 65535;
+
   lastTyreSurfTempFL = 255;
   lastTyreSurfTempFR = 255;
   lastTyreSurfTempRL = 255;
   lastTyreSurfTempRR = 255;
+
   lastTyreInnerTempFL = 255;
   lastTyreInnerTempFR = 255;
   lastTyreInnerTempRL = 255;
   lastTyreInnerTempRR = 255;
-  lastTyrePressureFL = -999.0f;
-  lastTyrePressureFR = -999.0f;
-  lastTyrePressureRL = -999.0f;
-  lastTyrePressureRR = -999.0f;
-  lastTyresAgeLaps = 255;
 
-  lastTyreWearFL = -999.0f;
-  lastTyreWearFR = -999.0f;
-  lastTyreWearRL = -999.0f;
-  lastTyreWearRR = -999.0f;
+  lastTyrePressureFL = -1.0f;
+  lastTyrePressureFR = -1.0f;
+  lastTyrePressureRL = -1.0f;
+  lastTyrePressureRR = -1.0f;
+
+  lastTyreWearFL = -1.0f;
+  lastTyreWearFR = -1.0f;
+  lastTyreWearRL = -1.0f;
+  lastTyreWearRR = -1.0f;
+
   lastTyreDamageFL = 255;
   lastTyreDamageFR = 255;
   lastTyreDamageRL = 255;
   lastTyreDamageRR = 255;
+
   lastBrakeDamageFL = 255;
   lastBrakeDamageFR = 255;
   lastBrakeDamageRL = 255;
@@ -536,36 +505,49 @@ void TelemetryView::resetTyreInfoDirtyTracking() {
 }
 
 void TelemetryView::resetCarInfoDirtyTracking() {
+  lastICEPower = -1.0f;
+  lastMGUKPower = -1.0f;
+  lastERSPercent = -1.0f;
   lastEngineTemp = 65535;
-  lastFrontLeftWingDamage = 255;
-  lastFrontRightWingDamage = 255;
-  lastRearWingDamage = 255;
+  lastDRSFault = 255;
+  lastERSFault = 255;
+
+  lastWingDamageFL = 255;
+  lastWingDamageFR = 255;
+  lastWingDamageRear = 255;
   lastFloorDamage = 255;
   lastDiffuserDamage = 255;
   lastSidepodDamage = 255;
-  lastDRSFault = 255;
-  lastERSFault = 255;
-  lastGearBoxDamage = 255;
-  lastEngineDamage = 255;
-  lastEngineMGUHWear = 255;
-  lastEngineESWear = 255;
-  lastEngineCEWear = 255;
-  lastEngineICEWear = 255;
-  lastEngineMGUKWear = 255;
-  lastEngineTCWear = 255;
-  lastEngineBlown = 255;
-  lastEngineSeized = 255;
+
+  lastGearboxDamage = 255;
+  lastICEDamage = 255;
+  lastMGUHDamage = 255;
+  lastMGUKDamage = 255;
+  lastTCDamage = 255;
+  lastERSDamage = 255;
+  lastCEDamage = 255;
 }
 
 void TelemetryView::resetSessionInfoDirtyTracking() {
   lastWeather = 255;
   lastTrackTemp = -99;
   lastAirTemp = -99;
+
   lastSessionType = 255;
+  lastCurrentLapInfo = 255;
+  lastTotalLaps = 255;
   lastSessionTimeLeft = 65535;
   lastSafetyCarStatus = 255;
-  lastPitStopWindowIdealLap = 255;
-  lastTotalLaps = 255;
+
+  lastBestLapTime = 0;
+  lastLastLapTime = 0;
+  lastSector1Time = 65535;
+  lastSector2Time = 65535;
+
+  lastFuelRemaining = -1.0f;
+  lastTyresAge = 255;
+  lastEngineTempCritical = 65535;
+  lastOverallDamage = 255;
 }
 
 // ============================================
@@ -575,14 +557,23 @@ void TelemetryView::resetSessionInfoDirtyTracking() {
 void TelemetryView::updatePosition() {
   uint8_t pos = model->getCarPosition();
   if (pos != lastPosition) {
-    tft->fillRect(75, 25, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(43, 1, 66, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(75, 25);
+
+    uint8_t cursorX;
+    if (pos < 10) {
+      cursorX = 64;
+    } else {
+      cursorX = 58;
+    }
+    tft->setCursor(cursorX, 4);
+
     if (pos > 0) {
       tft->print("P");
       tft->print(pos);
     } else {
+      tft->setCursor(64, 4);
       tft->print("--");
     }
     lastPosition = pos;
@@ -592,15 +583,16 @@ void TelemetryView::updatePosition() {
 void TelemetryView::updateDeltaFront() {
   uint16_t delta = model->getDeltaToCarInFrontMS();
   if (delta != lastDeltaFront) {
-    tft->fillRect(75, 40, 80, 10, COLOR_BLACK);
+    tft->fillRect(43, 25, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(75, 40);
+
     if (delta > 0 && delta < 30000) {
+      tft->setCursor(54, 32);
       tft->print("+");
-      tft->print(delta / 1000.0f, 3);
-      tft->print("s");
+      tft->print(delta / 1000.0f, 2);
     } else {
+      tft->setCursor(68, 32);
       tft->print("--");
     }
     lastDeltaFront = delta;
@@ -610,85 +602,103 @@ void TelemetryView::updateDeltaFront() {
 void TelemetryView::updateDeltaLeader() {
   uint16_t delta = model->getDeltaToRaceLeaderMS();
   if (delta != lastDeltaLeader) {
-    tft->fillRect(75, 55, 80, 10, COLOR_BLACK);
+    tft->fillRect(43, 49, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setCursor(75, 55);
+
     if (delta == 0) {
       tft->setTextColor(COLOR_GREEN);
-      tft->print("LEADER");
+      tft->setCursor(60, 56);
+      tft->print("LEAD");
     } else if (delta < 30000) {
       tft->setTextColor(COLOR_ORANGE);
+      tft->setCursor(54, 56);
       tft->print("+");
-      tft->print(delta / 1000.0f, 2);
-      tft->print("s");
+      tft->print(delta / 1000.0f, 1);
     } else {
       tft->setTextColor(COLOR_DARKGREY);
+      tft->setCursor(68, 56);
       tft->print("--");
     }
     lastDeltaLeader = delta;
   }
 }
 
-void TelemetryView::updateSafetyCarDelta() {
-  float delta = model->getSafetyCarDelta();
-  if (abs(delta - lastSafetyCarDelta) > 0.01f) {
-    tft->fillRect(75, 70, 80, 10, COLOR_BLACK);
+void TelemetryView::updateDeltaLive() {
+  float delta = model->getDeltaLive();
+  uint32_t bestLap = model->getBestLapTimeMS();
+  float lapDist = model->getLapDistance();
+
+  bool shouldUpdate = (abs(delta - lastDeltaLive) > 0.001f) || (lastDeltaLive == -999.0f);
+
+  if (shouldUpdate) {
+    tft->fillRect(43, 73, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(75, 70);
-    tft->print(delta, 2);
-    tft->print("s");
-    lastSafetyCarDelta = delta;
+
+    if (bestLap == 0 || lapDist < 10.0f) {
+      tft->setTextColor(COLOR_DARKGREY);
+      tft->setCursor(68, 80);
+      tft->print("--");
+    } else if (delta > 0.1f) {
+      tft->setTextColor(COLOR_RED);
+      tft->setCursor(50, 80);
+      tft->print("+");
+      tft->print(delta, 3);
+    } else if (delta < -0.1f) {
+      tft->setTextColor(COLOR_GREEN);
+      tft->setCursor(54, 80);
+      tft->print(delta, 3);
+    } else {
+      tft->setTextColor(COLOR_WHITE);
+      tft->setCursor(54, 80);
+      tft->print("0.000");
+    }
+
+    lastDeltaLive = delta;
   }
 }
 
 void TelemetryView::updateLastLapTime() {
   uint32_t time = model->getLastLapTimeMS();
   if (time != lastLapTime) {
-    tft->fillRect(75, 85, 80, 10, COLOR_BLACK);
+    tft->fillRect(43, 97, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(75, 85);
+    tft->setCursor(52, 105);
+
     if (time > 0) {
-      char buffer[16];
-      model->formatLapTime(time, buffer);
-      tft->print(buffer);
+      uint8_t mins = time / 60000;
+      uint8_t secs = (time % 60000) / 1000;
+      uint16_t ms = time % 1000;
+
+      if (mins > 0) {
+        tft->print(mins);
+        tft->print(":");
+        if (secs < 10) tft->print("0");
+      }
+      tft->print(secs);
+      tft->print(".");
+      if (ms < 100) tft->print("0");
+      if (ms < 10) tft->print("0");
+      tft->print(ms);
     } else {
-      tft->print("--:--.--");
+      tft->print("--");
     }
     lastLapTime = time;
-  }
-}
-
-void TelemetryView::updateCurrentLapTime() {
-  uint32_t time = model->getCurrentLapTimeMS();
-  if (time != lastCurrentLapTime) {
-    tft->fillRect(75, 100, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(75, 100);
-    if (time > 0) {
-      char buffer[16];
-      model->formatLapTime(time, buffer);
-      tft->print(buffer);
-    } else {
-      tft->print("--:--.--");
-    }
-    lastCurrentLapTime = time;
   }
 }
 
 void TelemetryView::updateSector1() {
   uint16_t time = model->getSector1TimeMS();
   if (time != lastSector1) {
-    tft->fillRect(75, 115, 80, 10, COLOR_BLACK);
+    tft->fillRect(43, 121, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_GREEN);
-    tft->setCursor(75, 115);
+
     if (time > 0) {
+      tft->setCursor(54, 128);
       tft->print(time / 1000.0f, 3);
-      tft->print("s");
     } else {
+      tft->setCursor(68, 128);
       tft->print("--");
     }
     lastSector1 = time;
@@ -698,14 +708,15 @@ void TelemetryView::updateSector1() {
 void TelemetryView::updateSector2() {
   uint16_t time = model->getSector2TimeMS();
   if (time != lastSector2) {
-    tft->fillRect(75, 130, 80, 10, COLOR_BLACK);
+    tft->fillRect(43, 145, 66, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_GREEN);
-    tft->setCursor(75, 130);
+
     if (time > 0) {
+      tft->setCursor(54, 152);
       tft->print(time / 1000.0f, 3);
-      tft->print("s");
     } else {
+      tft->setCursor(68, 152);
       tft->print("--");
     }
     lastSector2 = time;
@@ -715,10 +726,11 @@ void TelemetryView::updateSector2() {
 void TelemetryView::updateCurrentLapNum() {
   uint8_t lap = model->getCurrentLapNum();
   if (lap != lastCurrentLapNum) {
-    tft->fillRect(75, 145, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(43, 169, 66, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(75, 145);
+    uint8_t cursorX = (lap < 10) ? 69 : 63;
+    tft->setCursor(cursorX, 172);
     tft->print(lap);
     lastCurrentLapNum = lap;
   }
@@ -727,88 +739,105 @@ void TelemetryView::updateCurrentLapNum() {
 void TelemetryView::updateCornerCuttingWarnings() {
   uint8_t warnings = model->getCornerCuttingWarnings();
   if (warnings != lastCornerCuttingWarnings) {
-    tft->fillRect(75, 160, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(43, 193, 66, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(warnings > 0 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 160);
+    tft->setCursor(70, 199);
     tft->print(warnings);
     lastCornerCuttingWarnings = warnings;
-  }
-}
-
-void TelemetryView::updateSpeed() {
-  uint16_t speed = model->getSpeed();
-  if (speed != lastSpeed) {
-    tft->fillRect(235, 25, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(235, 25);
-    tft->print(speed);
-    tft->print(" km/h");
-    lastSpeed = speed;
-  }
-}
-
-void TelemetryView::updateThrottle() {
-  float throttle = model->getThrottle();
-  if (abs(throttle - lastThrottle) > 0.01f) {
-    tft->fillRect(235, 40, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_GREEN);
-    tft->setCursor(235, 40);
-    tft->print((int)(throttle * 100));
-    tft->print("%");
-    lastThrottle = throttle;
-  }
-}
-
-void TelemetryView::updateBrake() {
-  float brake = model->getBrake();
-  if (abs(brake - lastBrake) > 0.01f) {
-    tft->fillRect(235, 55, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_RED);
-    tft->setCursor(235, 55);
-    tft->print((int)(brake * 100));
-    tft->print("%");
-    lastBrake = brake;
-  }
-}
-
-void TelemetryView::updateGear() {
-  int8_t gear = model->getGear();
-  if (gear != lastGear) {
-    tft->fillRect(235, 70, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(235, 70);
-    if (gear == 0) tft->print("N");
-    else if (gear == -1) tft->print("R");
-    else tft->print(gear);
-    lastGear = gear;
   }
 }
 
 void TelemetryView::updateRPM() {
   uint16_t rpm = model->getEngineRPM();
   if (rpm != lastRPM) {
-    tft->fillRect(235, 85, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(113, 1, 74, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(235, 85);
+    uint8_t cursorX = (rpm < 10000) ? 130 : 122;
+    tft->setCursor(cursorX, 6);
     tft->print(rpm);
     lastRPM = rpm;
+  }
+}
+
+void TelemetryView::updateGear() {
+  int8_t gear = model->getGear();
+  if (gear != lastGear) {
+    tft->fillRect(113, 25, 74, 94, COLOR_BLACK);
+    tft->setTextSize(8);
+    tft->setCursor(130, 45);
+
+    if (gear == -1) {
+      tft->setTextColor(COLOR_RED);
+      tft->print("R");
+    } else if (gear == 0) {
+      tft->setTextColor(COLOR_WHITE);
+      tft->print("N");
+    } else {
+      tft->setTextColor(COLOR_WHITE);
+      tft->print(gear);
+    }
+
+    lastGear = gear;
+  }
+}
+
+void TelemetryView::updateSpeed() {
+  uint16_t speed = model->getSpeed();
+  if (speed != lastSpeed) {
+    tft->fillRect(113, 121, 74, 94, COLOR_BLACK);
+
+    tft->setTextSize(3);
+    tft->setTextColor(COLOR_WHITE);
+
+    uint8_t cursorX;
+    if (speed < 10) {
+      cursorX = 142;
+    } else if (speed < 100) {
+      cursorX = 131;
+    } else {
+      cursorX = 122;
+    }
+
+    tft->setCursor(cursorX, 140);
+    tft->print(speed);
+
+    tft->setTextSize(1);
+    tft->setTextColor(COLOR_DARKGREY);
+    tft->setCursor(138, 180);
+    tft->print("km/h");
+
+    lastSpeed = speed;
+  }
+}
+
+void TelemetryView::updateCurrentLapTime() {
+  uint32_t time = model->getCurrentLapTimeMS();
+  if (time != lastCurrentLapTime) {
+    tft->fillRect(191, 1, 86, 22, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(COLOR_WHITE);
+    tft->setCursor(210, 8);
+    if (time > 0) {
+      char buffer[16];
+      model->formatLapTime(time, buffer);
+      tft->print(buffer);
+    } else {
+      tft->print("--:--.---");
+    }
+    lastCurrentLapTime = time;
   }
 }
 
 void TelemetryView::updateDRS() {
   uint8_t drs = model->getDRS();
   if (drs != lastDRS) {
-    tft->fillRect(235, 100, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(191, 25, 86, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(drs == 1 ? COLOR_GREEN : COLOR_DARKGREY);
-    tft->setCursor(235, 100);
-    tft->print(drs == 1 ? "ACTIVE" : "OFF");
+    tft->setCursor(216, 30);
+    tft->print(drs == 1 ? "DRS" : "---");
     lastDRS = drs;
   }
 }
@@ -816,10 +845,11 @@ void TelemetryView::updateDRS() {
 void TelemetryView::updateRevLights() {
   uint8_t rev = model->getRevLightsPercent();
   if (rev != lastRevLightsPercent) {
-    tft->fillRect(235, 115, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(191, 49, 86, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(235, 115);
+    uint8_t cursorX = (rev < 10) ? 224 : (rev < 100 ? 218 : 212);
+    tft->setCursor(cursorX, 54);
     tft->print(rev);
     tft->print("%");
     lastRevLightsPercent = rev;
@@ -829,10 +859,11 @@ void TelemetryView::updateRevLights() {
 void TelemetryView::updateSuggestedGear() {
   int8_t gear = model->getSuggestedGear();
   if (gear != lastSuggestedGear) {
-    tft->fillRect(235, 130, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(191, 73, 86, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(235, 130);
+    uint8_t cursorX = (gear > 0) ? 228 : 224;
+    tft->setCursor(cursorX, 78);
     if (gear > 0) tft->print(gear);
     else tft->print("--");
     lastSuggestedGear = gear;
@@ -842,10 +873,11 @@ void TelemetryView::updateSuggestedGear() {
 void TelemetryView::updateFrontBrakeBias() {
   uint8_t bias = model->getFrontBrakeBias();
   if (bias != lastFrontBrakeBias) {
-    tft->fillRect(235, 145, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(191, 97, 86, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(235, 145);
+    uint8_t cursorX = (bias < 10) ? 224 : (bias < 100 ? 218 : 212);
+    tft->setCursor(cursorX, 102);
     tft->print(bias);
     tft->print("%");
     lastFrontBrakeBias = bias;
@@ -855,10 +887,11 @@ void TelemetryView::updateFrontBrakeBias() {
 void TelemetryView::updateDiffOnThrottle() {
   uint8_t diff = model->getDiffOnThrottle();
   if (diff != lastDiffOnThrottle) {
-    tft->fillRect(235, 160, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
+    tft->fillRect(191, 121, 86, 22, COLOR_BLACK);
+    tft->setTextSize(2);
     tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(235, 160);
+    uint8_t cursorX = (diff < 10) ? 224 : (diff < 100 ? 218 : 212);
+    tft->setCursor(cursorX, 126);
     tft->print(diff);
     tft->print("%");
     lastDiffOnThrottle = diff;
@@ -868,12 +901,12 @@ void TelemetryView::updateDiffOnThrottle() {
 void TelemetryView::updateFuelInTank() {
   float fuel = model->getFuelInTank();
   if (abs(fuel - lastFuelInTank) > 0.1f) {
-    tft->fillRect(235, 175, 80, 10, COLOR_BLACK);
+    tft->fillRect(191, 145, 86, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(235, 175);
+    tft->setCursor(215, 153);
     tft->print(fuel, 1);
-    tft->print(" kg");
+    tft->print("kg");
     lastFuelInTank = fuel;
   }
 }
@@ -881,52 +914,104 @@ void TelemetryView::updateFuelInTank() {
 void TelemetryView::updateFuelRemainingLaps() {
   float laps = model->getFuelRemainingLaps();
   if (abs(laps - lastFuelRemainingLaps) > 0.1f) {
-    tft->fillRect(235, 190, 80, 10, COLOR_BLACK);
+    tft->fillRect(191, 169, 86, 22, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setCursor(235, 190);
 
     if (laps > 0.1f) {
       uint16_t color = laps < 1.0f ? COLOR_RED : (laps < 3.0f ? COLOR_YELLOW : COLOR_GREEN);
       tft->setTextColor(color);
+      tft->setCursor(222, 177);
       tft->print(laps, 1);
-      tft->print(" laps");
     } else {
       tft->setTextColor(COLOR_DARKGREY);
+      tft->setCursor(228, 177);
       tft->print("--");
     }
-
     lastFuelRemainingLaps = laps;
-  }
-}
-
-void TelemetryView::updateERSEnergy() {
-  float ers = model->getERSPercent();
-  if (abs(ers - lastERSEnergy) > 0.1f) {
-    tft->fillRect(235, 205, 80, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(235, 205);
-    tft->print(ers, 1);
-    tft->print(" %");
-    lastERSEnergy = ers;
   }
 }
 
 void TelemetryView::updateERSMode() {
   uint8_t mode = model->getERSDeployMode();
   if (mode != lastERSMode) {
-    tft->fillRect(235, 220, 80, 10, COLOR_BLACK);
+    tft->fillRect(191, 193, 86, 22, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(235, 220);
+    tft->setCursor(220, 201);
     switch (mode) {
       case 0: tft->print("NONE"); break;
-      case 1: tft->print("MEDIUM"); break;
-      case 2: tft->print("HOTLAP"); break;
-      case 3: tft->print("OVERTAKE"); break;
+      case 1: tft->print("MED"); break;
+      case 2: tft->print("HOT"); break;
+      case 3: tft->print("OVR"); break;
       default: tft->print("--"); break;
     }
     lastERSMode = mode;
+  }
+}
+
+void TelemetryView::updateERSEnergy() {
+  float ers = model->getERSPercent();
+  if (abs(ers - lastERSEnergy) > 0.1f) {
+    int barWidth = (int)((ers / 100.0f) * 234);
+
+    if (lastERSEnergy < 0.0f) {
+      tft->fillRect(43, 217, 234, 22, COLOR_BLACK);
+      tft->fillRect(43, 217, barWidth, 22, COLOR_YELLOW);
+    } else {
+      int oldBarWidth = (int)((lastERSEnergy / 100.0f) * 234);
+
+      if (barWidth > oldBarWidth) {
+        tft->fillRect(43 + oldBarWidth, 217, barWidth - oldBarWidth, 22, COLOR_YELLOW);
+      } else if (barWidth < oldBarWidth) {
+        tft->fillRect(43 + barWidth, 217, oldBarWidth - barWidth, 22, COLOR_BLACK);
+      }
+    }
+
+    lastERSEnergy = ers;
+  }
+}
+
+void TelemetryView::updateThrottle() {
+  float throttle = model->getThrottle();
+  if (abs(throttle - lastThrottle) > 0.01f) {
+    int barHeight = (int)(throttle * 238);
+
+    if (lastThrottle < 0.0f) {
+      tft->fillRect(281, 1, 38, 238, COLOR_BLACK);
+      tft->fillRect(281, 239 - barHeight, 38, barHeight, COLOR_GREEN);
+    } else {
+      int oldBarHeight = (int)(lastThrottle * 238);
+
+      if (barHeight > oldBarHeight) {
+        tft->fillRect(281, 239 - barHeight, 38, barHeight - oldBarHeight, COLOR_GREEN);
+      } else if (barHeight < oldBarHeight) {
+        tft->fillRect(281, 239 - oldBarHeight, 38, oldBarHeight - barHeight, COLOR_BLACK);
+      }
+    }
+
+    lastThrottle = throttle;
+  }
+}
+
+void TelemetryView::updateBrake() {
+  float brake = model->getBrake();
+  if (abs(brake - lastBrake) > 0.01f) {
+    int barHeight = (int)(brake * 238);
+
+    if (lastBrake < 0.0f) {
+      tft->fillRect(1, 1, 38, 238, COLOR_BLACK);
+      tft->fillRect(1, 239 - barHeight, 38, barHeight, COLOR_RED);
+    } else {
+      int oldBarHeight = (int)(lastBrake * 238);
+
+      if (barHeight > oldBarHeight) {
+        tft->fillRect(1, 239 - barHeight, 38, barHeight - oldBarHeight, COLOR_RED);
+      } else if (barHeight < oldBarHeight) {
+        tft->fillRect(1, 239 - oldBarHeight, 38, oldBarHeight - barHeight, COLOR_BLACK);
+      }
+    }
+
+    lastBrake = brake;
   }
 }
 
@@ -938,11 +1023,11 @@ void TelemetryView::updateLEDs() {
     pixels->clear();
     for (int i = 0; i < ledsOn; i++) {
       if (i < LED_GREEN_COUNT) {
-        pixels->setPixelColor(i, pixels->Color(0, 150, 0));
+        pixels->setPixelColor(i, pixels->Color(0, 255, 0));
       } else if (i < LED_GREEN_COUNT + LED_YELLOW_COUNT) {
-        pixels->setPixelColor(i, pixels->Color(150, 150, 0));
+        pixels->setPixelColor(i, pixels->Color(255, 255, 0));
       } else {
-        pixels->setPixelColor(i, pixels->Color(150, 0, 0));
+        pixels->setPixelColor(i, pixels->Color(255, 0, 0));
       }
     }
     pixels->show();
@@ -954,6 +1039,20 @@ void TelemetryView::updateLEDs() {
 // UPDATE METHODS - TYRE INFO SCREEN
 // ============================================
 
+void TelemetryView::updateTyresAgeLaps() {
+  uint8_t age = model->getTyresAgeLaps();
+  if (age != lastTyresAgeLaps) {
+    tft->fillRect(1, 1, 318, 22, COLOR_BLACK);
+    tft->setTextSize(2);
+    tft->setTextColor(COLOR_WHITE);
+    tft->setCursor(90, 4);
+    tft->print("AGE: ");
+    tft->print(age);
+    tft->print(" LAPS");
+    lastTyresAgeLaps = age;
+  }
+}
+
 void TelemetryView::updateBrakeTemps() {
   uint16_t fl = model->getBrakeTemp(2);
   uint16_t fr = model->getBrakeTemp(3);
@@ -961,40 +1060,44 @@ void TelemetryView::updateBrakeTemps() {
   uint16_t rr = model->getBrakeTemp(1);
 
   if (fl != lastBrakeTempFL) {
-    tft->fillRect(50, 37, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 40, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(50, 37);
+    tft->setTextColor(fl > 600 ? COLOR_RED : COLOR_ORANGE);
+    tft->setCursor(5, 40);
+    tft->print("Brake: ");
     tft->print(fl);
     tft->print("C");
     lastBrakeTempFL = fl;
   }
 
   if (fr != lastBrakeTempFR) {
-    tft->fillRect(220, 37, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 40, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(220, 37);
+    tft->setTextColor(fr > 600 ? COLOR_RED : COLOR_ORANGE);
+    tft->setCursor(165, 40);
+    tft->print("Brake: ");
     tft->print(fr);
     tft->print("C");
     lastBrakeTempFR = fr;
   }
 
   if (rl != lastBrakeTempRL) {
-    tft->fillRect(50, 142, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 148, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(50, 142);
+    tft->setTextColor(rl > 600 ? COLOR_RED : COLOR_ORANGE);
+    tft->setCursor(5, 148);
+    tft->print("Brake: ");
     tft->print(rl);
     tft->print("C");
     lastBrakeTempRL = rl;
   }
 
   if (rr != lastBrakeTempRR) {
-    tft->fillRect(220, 142, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 148, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(220, 142);
+    tft->setTextColor(rr > 600 ? COLOR_RED : COLOR_ORANGE);
+    tft->setCursor(165, 148);
+    tft->print("Brake: ");
     tft->print(rr);
     tft->print("C");
     lastBrakeTempRR = rr;
@@ -1008,40 +1111,44 @@ void TelemetryView::updateTyreSurfaceTemps() {
   uint8_t rr = model->getTyreSurfaceTemp(1);
 
   if (fl != lastTyreSurfTempFL) {
-    tft->fillRect(50, 49, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 52, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_RED);
-    tft->setCursor(50, 49);
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(5, 52);
+    tft->print("Surf:  ");
     tft->print(fl);
     tft->print("C");
     lastTyreSurfTempFL = fl;
   }
 
   if (fr != lastTyreSurfTempFR) {
-    tft->fillRect(220, 49, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 52, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_RED);
-    tft->setCursor(220, 49);
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(165, 52);
+    tft->print("Surf:  ");
     tft->print(fr);
     tft->print("C");
     lastTyreSurfTempFR = fr;
   }
 
   if (rl != lastTyreSurfTempRL) {
-    tft->fillRect(50, 154, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 160, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_RED);
-    tft->setCursor(50, 154);
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(5, 160);
+    tft->print("Surf:  ");
     tft->print(rl);
     tft->print("C");
     lastTyreSurfTempRL = rl;
   }
 
   if (rr != lastTyreSurfTempRR) {
-    tft->fillRect(220, 154, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 160, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_RED);
-    tft->setCursor(220, 154);
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(165, 160);
+    tft->print("Surf:  ");
     tft->print(rr);
     tft->print("C");
     lastTyreSurfTempRR = rr;
@@ -1055,56 +1162,47 @@ void TelemetryView::updateTyreInnerTemps() {
   uint8_t rr = model->getTyreInnerTemp(1);
 
   if (fl != lastTyreInnerTempFL) {
-    tft->fillRect(50, 61, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 64, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(50, 61);
+    tft->setTextColor(COLOR_YELLOW);
+    tft->setCursor(5, 64);
+    tft->print("Inner: ");
     tft->print(fl);
     tft->print("C");
     lastTyreInnerTempFL = fl;
   }
 
   if (fr != lastTyreInnerTempFR) {
-    tft->fillRect(220, 61, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 64, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(220, 61);
+    tft->setTextColor(COLOR_YELLOW);
+    tft->setCursor(165, 64);
+    tft->print("Inner: ");
     tft->print(fr);
     tft->print("C");
     lastTyreInnerTempFR = fr;
   }
 
   if (rl != lastTyreInnerTempRL) {
-    tft->fillRect(50, 166, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 172, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(50, 166);
+    tft->setTextColor(COLOR_YELLOW);
+    tft->setCursor(5, 172);
+    tft->print("Inner: ");
     tft->print(rl);
     tft->print("C");
     lastTyreInnerTempRL = rl;
   }
 
   if (rr != lastTyreInnerTempRR) {
-    tft->fillRect(220, 166, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 172, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(220, 166);
+    tft->setTextColor(COLOR_YELLOW);
+    tft->setCursor(165, 172);
+    tft->print("Inner: ");
     tft->print(rr);
     tft->print("C");
     lastTyreInnerTempRR = rr;
-  }
-}
-
-void TelemetryView::updateEngineTemp() {
-  uint16_t temp = model->getEngineTemp();
-  if (temp != lastEngineTemp) {
-    tft->fillRect(60, 37, 90, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(60, 37);
-    tft->print(temp);
-    tft->print("C");
-    lastEngineTemp = temp;
   }
 }
 
@@ -1115,56 +1213,43 @@ void TelemetryView::updateTyrePressures() {
   float rr = model->getTyrePressure(1);
 
   if (abs(fl - lastTyrePressureFL) > 0.01f) {
-    tft->fillRect(50, 73, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 76, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(50, 73);
-    tft->print(fl, 1);
-    tft->print(" PSI");
+    tft->setTextColor(COLOR_WHITE);
+    tft->setCursor(5, 76);
+    tft->print("Press: ");
+    tft->print(fl, 2);
     lastTyrePressureFL = fl;
   }
 
   if (abs(fr - lastTyrePressureFR) > 0.01f) {
-    tft->fillRect(220, 73, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 76, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(220, 73);
-    tft->print(fr, 1);
-    tft->print(" PSI");
+    tft->setTextColor(COLOR_WHITE);
+    tft->setCursor(165, 76);
+    tft->print("Press: ");
+    tft->print(fr, 2);
     lastTyrePressureFR = fr;
   }
 
   if (abs(rl - lastTyrePressureRL) > 0.01f) {
-    tft->fillRect(50, 178, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 184, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(50, 178);
-    tft->print(rl, 1);
-    tft->print(" PSI");
+    tft->setTextColor(COLOR_WHITE);
+    tft->setCursor(5, 184);
+    tft->print("Press: ");
+    tft->print(rl, 2);
     lastTyrePressureRL = rl;
   }
 
   if (abs(rr - lastTyrePressureRR) > 0.01f) {
-    tft->fillRect(220, 178, 100, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(220, 178);
-    tft->print(rr, 1);
-    tft->print(" PSI");
-    lastTyrePressureRR = rr;
-  }
-}
-
-void TelemetryView::updateTyresAgeLaps() {
-  uint8_t age = model->getTyresAgeLaps();
-  if (age != lastTyresAgeLaps) {
-    tft->fillRect(135, 227, 70, 10, COLOR_BLACK);
+    tft->fillRect(165, 184, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(135, 227);
-    tft->print(age);
-    tft->print(" laps");
-    lastTyresAgeLaps = age;
+    tft->setCursor(165, 184);
+    tft->print("Press: ");
+    tft->print(rr, 2);
+    lastTyrePressureRR = rr;
   }
 }
 
@@ -1175,41 +1260,45 @@ void TelemetryView::updateTyreWear() {
   float rr = model->getTyreWear(1);
 
   if (abs(fl - lastTyreWearFL) > 0.1f) {
-    tft->fillRect(50, 85, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 88, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(50, 85);
-    tft->print(fl, 1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(5, 88);
+    tft->print("Wear:  ");
+    tft->print((int)fl);
     tft->print("%");
     lastTyreWearFL = fl;
   }
 
   if (abs(fr - lastTyreWearFR) > 0.1f) {
-    tft->fillRect(220, 85, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 88, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(220, 85);
-    tft->print(fr, 1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(165, 88);
+    tft->print("Wear:  ");
+    tft->print((int)fr);
     tft->print("%");
     lastTyreWearFR = fr;
   }
 
   if (abs(rl - lastTyreWearRL) > 0.1f) {
-    tft->fillRect(50, 190, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 196, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(50, 190);
-    tft->print(rl, 1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(5, 196);
+    tft->print("Wear:  ");
+    tft->print((int)rl);
     tft->print("%");
     lastTyreWearRL = rl;
   }
 
   if (abs(rr - lastTyreWearRR) > 0.1f) {
-    tft->fillRect(220, 190, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 196, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(220, 190);
-    tft->print(rr, 1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(165, 196);
+    tft->print("Wear:  ");
+    tft->print((int)rr);
     tft->print("%");
     lastTyreWearRR = rr;
   }
@@ -1222,40 +1311,44 @@ void TelemetryView::updateTyreDamage() {
   uint8_t rr = model->getTyreDamage(1);
 
   if (fl != lastTyreDamageFL) {
-    tft->fillRect(50, 97, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 100, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(fl > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(50, 97);
+    tft->setCursor(5, 100);
+    tft->print("T.Dmg: ");
     tft->print(fl);
     tft->print("%");
     lastTyreDamageFL = fl;
   }
 
   if (fr != lastTyreDamageFR) {
-    tft->fillRect(220, 97, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 100, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(fr > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(220, 97);
+    tft->setCursor(165, 100);
+    tft->print("T.Dmg: ");
     tft->print(fr);
     tft->print("%");
     lastTyreDamageFR = fr;
   }
 
   if (rl != lastTyreDamageRL) {
-    tft->fillRect(50, 202, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 208, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(rl > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(50, 202);
+    tft->setCursor(5, 208);
+    tft->print("T.Dmg: ");
     tft->print(rl);
     tft->print("%");
     lastTyreDamageRL = rl;
   }
 
   if (rr != lastTyreDamageRR) {
-    tft->fillRect(220, 202, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 208, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(rr > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(220, 202);
+    tft->setCursor(165, 208);
+    tft->print("T.Dmg: ");
     tft->print(rr);
     tft->print("%");
     lastTyreDamageRR = rr;
@@ -1269,40 +1362,44 @@ void TelemetryView::updateBrakeDamage() {
   uint8_t rr = model->getBrakeDamage(1);
 
   if (fl != lastBrakeDamageFL) {
-    tft->fillRect(50, 109, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 112, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(fl > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(50, 109);
+    tft->setCursor(5, 112);
+    tft->print("B.Dmg: ");
     tft->print(fl);
     tft->print("%");
     lastBrakeDamageFL = fl;
   }
 
   if (fr != lastBrakeDamageFR) {
-    tft->fillRect(220, 109, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 112, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(fr > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(220, 109);
+    tft->setCursor(165, 112);
+    tft->print("B.Dmg: ");
     tft->print(fr);
     tft->print("%");
     lastBrakeDamageFR = fr;
   }
 
   if (rl != lastBrakeDamageRL) {
-    tft->fillRect(50, 214, 100, 10, COLOR_BLACK);
+    tft->fillRect(5, 220, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(rl > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(50, 214);
+    tft->setCursor(5, 220);
+    tft->print("B.Dmg: ");
     tft->print(rl);
     tft->print("%");
     lastBrakeDamageRL = rl;
   }
 
   if (rr != lastBrakeDamageRR) {
-    tft->fillRect(220, 214, 100, 10, COLOR_BLACK);
+    tft->fillRect(165, 220, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(rr > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(220, 214);
+    tft->setCursor(165, 220);
+    tft->print("B.Dmg: ");
     tft->print(rr);
     tft->print("%");
     lastBrakeDamageRR = rr;
@@ -1313,379 +1410,562 @@ void TelemetryView::updateBrakeDamage() {
 // UPDATE METHODS - CAR DAMAGE SCREEN
 // ============================================
 
-void TelemetryView::updateWingDamage() {
-  uint8_t fl = model->getFrontLeftWingDamage();
-  uint8_t fr = model->getFrontRightWingDamage();
-  uint8_t rear = model->getRearWingDamage();
+void TelemetryView::updatePowerUnit() {
+  float icePower = model->getEnginePowerICE();
+  float mgukPower = model->getEnginePowerMGUK();
+  float ersPercent = model->getERSPercent();
+  uint16_t engineTemp = model->getEngineTemp();
+  uint8_t drsFault = model->getDRSFault();
+  uint8_t ersFault = model->getERSFault();
 
-  if (fl != lastFrontLeftWingDamage) {
-    tft->fillRect(75, 97, 80, 10, COLOR_BLACK);
+  if (abs(icePower - lastICEPower) > 1.0f) {
+    tft->fillRect(60, 25, 90, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(fl > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 97);
-    tft->print(fl);
-    tft->print("%");
-    lastFrontLeftWingDamage = fl;
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(60, 25);
+    tft->print((int)icePower);
+    tft->print(" kW");
+    lastICEPower = icePower;
   }
 
-  if (fr != lastFrontRightWingDamage) {
-    tft->fillRect(75, 109, 80, 10, COLOR_BLACK);
+  if (abs(mgukPower - lastMGUKPower) > 1.0f) {
+    tft->fillRect(60, 40, 90, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(fr > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 109);
-    tft->print(fr);
-    tft->print("%");
-    lastFrontRightWingDamage = fr;
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(60, 40);
+    tft->print((int)mgukPower);
+    tft->print(" kW");
+    lastMGUKPower = mgukPower;
   }
 
-  if (rear != lastRearWingDamage) {
-    tft->fillRect(75, 121, 80, 10, COLOR_BLACK);
+  if (abs(ersPercent - lastERSPercent) > 1.0f) {
+    tft->fillRect(60, 55, 90, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(rear > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 121);
-    tft->print(rear);
+    uint16_t color = ersPercent < 20 ? COLOR_RED : (ersPercent < 50 ? COLOR_YELLOW : COLOR_GREEN);
+    tft->setTextColor(color);
+    tft->setCursor(60, 55);
+    tft->print((int)ersPercent);
     tft->print("%");
-    lastRearWingDamage = rear;
+    lastERSPercent = ersPercent;
+  }
+
+  if (engineTemp != lastEngineTemp) {
+    tft->fillRect(60, 70, 90, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(engineTemp >= 160 ? COLOR_RED : (engineTemp >= 140 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(60, 70);
+    tft->print(engineTemp);
+    tft->print("C");
+    lastEngineTemp = engineTemp;
+  }
+
+  if (drsFault != lastDRSFault || ersFault != lastERSFault) {
+    tft->fillRect(60, 85, 90, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    if (drsFault == 1 || ersFault == 1) {
+      tft->setTextColor(COLOR_RED);
+      tft->setCursor(60, 85);
+      if (drsFault == 1) tft->print("DRS FAULT");
+      else tft->print("ERS FAULT");
+    } else {
+      tft->setTextColor(COLOR_GREEN);
+      tft->setCursor(60, 85);
+      tft->print("OK");
+    }
+    lastDRSFault = drsFault;
+    lastERSFault = ersFault;
   }
 }
 
 void TelemetryView::updateAeroDamage() {
+  uint8_t fl = model->getFrontLeftWingDamage();
+  uint8_t fr = model->getFrontRightWingDamage();
+  uint8_t rear = model->getRearWingDamage();
   uint8_t floor = model->getFloorDamage();
   uint8_t diffuser = model->getDiffuserDamage();
   uint8_t sidepod = model->getSidepodDamage();
 
-  if (floor != lastFloorDamage) {
-    tft->fillRect(75, 133, 80, 10, COLOR_BLACK);
+  if (fl != lastWingDamageFL) {
+    tft->fillRect(240, 25, 70, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(floor > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 133);
+    tft->setTextColor(fl > 40 ? COLOR_RED : (fl > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 25);
+    tft->print(fl);
+    tft->print("%");
+    lastWingDamageFL = fl;
+  }
+
+  if (fr != lastWingDamageFR) {
+    tft->fillRect(240, 37, 70, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(fr > 40 ? COLOR_RED : (fr > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 37);
+    tft->print(fr);
+    tft->print("%");
+    lastWingDamageFR = fr;
+  }
+
+  if (rear != lastWingDamageRear) {
+    tft->fillRect(240, 49, 70, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(rear > 40 ? COLOR_RED : (rear > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 49);
+    tft->print(rear);
+    tft->print("%");
+    lastWingDamageRear = rear;
+  }
+
+  if (floor != lastFloorDamage) {
+    tft->fillRect(240, 61, 70, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(floor > 40 ? COLOR_RED : (floor > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 61);
     tft->print(floor);
     tft->print("%");
     lastFloorDamage = floor;
   }
 
   if (diffuser != lastDiffuserDamage) {
-    tft->fillRect(75, 145, 80, 10, COLOR_BLACK);
+    tft->fillRect(240, 73, 70, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(diffuser > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 145);
+    tft->setTextColor(diffuser > 40 ? COLOR_RED : (diffuser > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 73);
     tft->print(diffuser);
     tft->print("%");
     lastDiffuserDamage = diffuser;
   }
 
   if (sidepod != lastSidepodDamage) {
-    tft->fillRect(75, 157, 80, 10, COLOR_BLACK);
+    tft->fillRect(240, 85, 70, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(sidepod > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(75, 157);
+    tft->setTextColor(sidepod > 40 ? COLOR_RED : (sidepod > 20 ? COLOR_YELLOW : COLOR_GREEN));
+    tft->setCursor(240, 85);
     tft->print(sidepod);
     tft->print("%");
     lastSidepodDamage = sidepod;
   }
 }
 
-void TelemetryView::updatePowertrainDamage() {
+void TelemetryView::updateComponentWear() {
   uint8_t gearbox = model->getGearBoxDamage();
   uint8_t ice = model->getEngineICEWear();
   uint8_t mguh = model->getEngineMGUHWear();
   uint8_t mguk = model->getEngineMGUKWear();
+  uint8_t tc = model->getEngineTCWear();
   uint8_t es = model->getEngineESWear();
   uint8_t ce = model->getEngineCEWear();
-  uint8_t tc = model->getEngineTCWear();
 
-  if (gearbox != lastGearBoxDamage) {
-    tft->fillRect(240, 37, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(gearbox > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 37);
-    tft->print(gearbox);
-    tft->print("%");
-    lastGearBoxDamage = gearbox;
-  }
+  auto drawWearBar = [this](uint8_t wear, uint8_t lastWear, int y) -> uint8_t {
+    if (wear != lastWear) {
+      tft->fillRect(70, y, 240, 10, COLOR_BLACK);
+      tft->drawRect(70, y + 2, 150, 6, COLOR_DARKGREY);
 
-  if (ice != lastEngineICEWear) {
-    tft->fillRect(240, 49, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(ice > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 49);
-    tft->print(ice);
-    tft->print("%");
-    lastEngineICEWear = ice;
-  }
+      int barWidth = (wear * 150) / 100;
+      uint16_t color = wear > 90 ? COLOR_RED : (wear > 70 ? COLOR_YELLOW : COLOR_GREEN);
+      tft->fillRect(71, y + 3, barWidth, 4, color);
 
-  if (mguh != lastEngineMGUHWear) {
-    tft->fillRect(240, 61, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(mguh > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 61);
-    tft->print(mguh);
-    tft->print("%");
-    lastEngineMGUHWear = mguh;
-  }
+      tft->setTextSize(1);
+      tft->setTextColor(color);
+      tft->setCursor(230, y);
+      tft->print(wear);
+      tft->print("%");
+    }
+    return wear;
+  };
 
-  if (mguk != lastEngineMGUKWear) {
-    tft->fillRect(240, 73, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(mguk > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 73);
-    tft->print(mguk);
-    tft->print("%");
-    lastEngineMGUKWear = mguk;
-  }
-
-  if (es != lastEngineESWear) {
-    tft->fillRect(240, 85, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(es > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 85);
-    tft->print(es);
-    tft->print("%");
-    lastEngineESWear = es;
-  }
-
-  if (ce != lastEngineCEWear) {
-    tft->fillRect(240, 97, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(ce > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 97);
-    tft->print(ce);
-    tft->print("%");
-    lastEngineCEWear = ce;
-  }
-
-  if (tc != lastEngineTCWear) {
-    tft->fillRect(240, 109, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(tc > 80 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 109);
-    tft->print(tc);
-    tft->print("%");
-    lastEngineTCWear = tc;
-  }
-}
-
-void TelemetryView::updateCriticalDamage() {
-  uint8_t engineDmg = model->getEngineDamage();
-  uint8_t blown = model->getEngineBlown();
-  uint8_t seized = model->getEngineSeized();
-  uint8_t drsFault = model->getDRSFault();
-  uint8_t ersFault = model->getERSFault();
-
-  if (engineDmg != lastEngineDamage) {
-    tft->fillRect(60, 49, 90, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(engineDmg > 50 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(60, 49);
-    tft->print(engineDmg);
-    tft->print("%");
-    lastEngineDamage = engineDmg;
-  }
-
-  if (blown != lastEngineBlown) {
-    tft->fillRect(60, 61, 90, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(blown > 0 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(60, 61);
-    tft->print(blown > 0 ? "YES" : "NO");
-    lastEngineBlown = blown;
-  }
-
-  if (seized != lastEngineSeized) {
-    tft->fillRect(60, 73, 90, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(seized > 0 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(60, 73);
-    tft->print(seized > 0 ? "YES" : "NO");
-    lastEngineSeized = seized;
-  }
-
-  if (drsFault != lastDRSFault) {
-    tft->fillRect(240, 134, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(drsFault > 0 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 134);
-    tft->print(drsFault > 0 ? "FAULT" : "OK");
-    lastDRSFault = drsFault;
-  }
-
-  if (ersFault != lastERSFault) {
-    tft->fillRect(240, 146, 75, 10, COLOR_BLACK);
-    tft->setTextSize(1);
-    tft->setTextColor(ersFault > 0 ? COLOR_RED : COLOR_GREEN);
-    tft->setCursor(240, 146);
-    tft->print(ersFault > 0 ? "FAULT" : "OK");
-    lastERSFault = ersFault;
-  }
+  lastGearboxDamage = drawWearBar(gearbox, lastGearboxDamage, 130);
+  lastICEDamage = drawWearBar(ice, lastICEDamage, 145);
+  lastMGUHDamage = drawWearBar(mguh, lastMGUHDamage, 160);
+  lastMGUKDamage = drawWearBar(mguk, lastMGUKDamage, 175);
+  lastTCDamage = drawWearBar(tc, lastTCDamage, 190);
+  lastERSDamage = drawWearBar(es, lastERSDamage, 205);
+  lastCEDamage = drawWearBar(ce, lastCEDamage, 220);
 }
 
 // ============================================
-// UPDATE METHODS - SESSION INFO SCREEN
+// UPDATE METHODS - SCREEN 4: RACE OVERVIEW
 // ============================================
+
 
 void TelemetryView::updateWeather() {
   uint8_t weather = model->getWeather();
   if (weather != lastWeather) {
-    tft->fillRect(140, 40, 160, 15, COLOR_BLACK);
+    tft->fillRect(70, 25, 80, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(140, 40);
+
+    const char* weatherText;
+    uint16_t color;
     switch (weather) {
-      case 0: tft->print("Clear"); break;
-      case 1: tft->print("Light Cloud"); break;
-      case 2: tft->print("Overcast"); break;
-      case 3: tft->print("Light Rain"); break;
-      case 4: tft->print("Heavy Rain"); break;
-      case 5: tft->print("Storm"); break;
-      default: tft->print("Unknown"); break;
+      case 0:
+        weatherText = "CLEAR";
+        color = COLOR_CYAN;
+        break;
+      case 1:
+        weatherText = "LT CLOUD";
+        color = COLOR_WHITE;
+        break;
+      case 2:
+        weatherText = "OVERCAST";
+        color = COLOR_DARKGREY;
+        break;
+      case 3:
+        weatherText = "LT RAIN";
+        color = COLOR_YELLOW;
+        break;
+      case 4:
+        weatherText = "HVY RAIN";
+        color = COLOR_YELLOW;
+        break;
+      case 5:
+        weatherText = "STORM";
+        color = COLOR_RED;
+        break;
+      default:
+        weatherText = "UNKNOWN";
+        color = COLOR_WHITE;
+        break;
     }
+
+    tft->setTextColor(color);
+    tft->setCursor(70, 25);
+    tft->print(weatherText);
     lastWeather = weather;
   }
 }
 
 void TelemetryView::updateTrackTemp() {
-  int8_t temp = model->getTrackTemperature();
-  if (temp != lastTrackTemp) {
-    tft->fillRect(140, 60, 160, 15, COLOR_BLACK);
+  int8_t trackTemp = model->getTrackTemperature();
+  if (trackTemp != lastTrackTemp) {
+    tft->fillRect(70, 40, 80, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_ORANGE);
-    tft->setCursor(140, 60);
-    tft->print(temp);
-    tft->print(" C");
-    lastTrackTemp = temp;
+    uint16_t color = trackTemp > 40 ? COLOR_RED : (trackTemp > 30 ? COLOR_YELLOW : COLOR_GREEN);
+    tft->setTextColor(color);
+    tft->setCursor(70, 40);
+    tft->print(trackTemp);
+    tft->print("C");
+    lastTrackTemp = trackTemp;
   }
 }
 
 void TelemetryView::updateAirTemp() {
-  int8_t temp = model->getAirTemperature();
-  if (temp != lastAirTemp) {
-    tft->fillRect(140, 80, 160, 15, COLOR_BLACK);
+  int8_t airTemp = model->getAirTemperature();
+  if (airTemp != lastAirTemp) {
+    tft->fillRect(70, 55, 80, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_CYAN);
-    tft->setCursor(140, 80);
-    tft->print(temp);
-    tft->print(" C");
-    lastAirTemp = temp;
+    uint16_t color = airTemp > 35 ? COLOR_RED : (airTemp > 25 ? COLOR_YELLOW : COLOR_GREEN);
+    tft->setTextColor(color);
+    tft->setCursor(70, 55);
+    tft->print(airTemp);
+    tft->print("C");
+    lastAirTemp = airTemp;
   }
 }
+
 
 void TelemetryView::updateSessionType() {
   uint8_t type = model->getSessionType();
   if (type != lastSessionType) {
-    tft->fillRect(140, 100, 160, 15, COLOR_BLACK);
+    tft->fillRect(210, 25, 100, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_YELLOW);
-    tft->setCursor(140, 100);
+    tft->setTextColor(COLOR_MAGENTA);
+    tft->setCursor(210, 25);
+
     switch (type) {
-      case 1: tft->print("Practice 1"); break;
-      case 2: tft->print("Practice 2"); break;
-      case 3: tft->print("Practice 3"); break;
-      case 5: tft->print("Qualifying 1"); break;
-      case 6: tft->print("Qualifying 2"); break;
-      case 7: tft->print("Qualifying 3"); break;
-      case 10: tft->print("Race"); break;
-      default: tft->print("Unknown"); break;
+      case 0: tft->print("UNKNOWN"); break;
+      case 1: tft->print("FP1"); break;
+      case 2: tft->print("FP2"); break;
+      case 3: tft->print("FP3"); break;
+      case 4: tft->print("FP SHORT"); break;
+      case 5: tft->print("Q1"); break;
+      case 6: tft->print("Q2"); break;
+      case 7: tft->print("Q3"); break;
+      case 8: tft->print("Q SHORT"); break;
+      case 9: tft->print("OSQ"); break;
+      case 10: tft->print("RACE"); break;
+      case 11: tft->print("RACE 2"); break;
+      case 12: tft->print("RACE 3"); break;
+      case 13: tft->print("TIME TRIAL"); break;
+      default: tft->print("SESSION"); break;
     }
     lastSessionType = type;
   }
 }
 
-void TelemetryView::updateSessionTimeLeft() {
-  uint16_t time = model->getSessionTimeLeft();
-  uint8_t sessionType = model->getSessionType();
+void TelemetryView::updateLapInfo() {
+  uint8_t currentLap = model->getCurrentLapNum();
+  uint8_t totalLaps = model->getTotalLaps();
 
-  if (time != lastSessionTimeLeft) {
-    tft->fillRect(140, 120, 160, 15, COLOR_BLACK);
+  if (currentLap != lastCurrentLapInfo || totalLaps != lastTotalLaps) {
+    tft->fillRect(210, 37, 100, 10, COLOR_BLACK);
     tft->setTextSize(1);
     tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(140, 120);
+    tft->setCursor(210, 37);
+    tft->print(currentLap);
+    tft->print(" / ");
+    tft->print(totalLaps);
+    lastCurrentLapInfo = currentLap;
+    lastTotalLaps = totalLaps;
+  }
+}
 
-    if (sessionType == SESSION_RACE || sessionType == SESSION_RACE2 || sessionType == SESSION_RACE3) {
-      tft->print("--");
-    } else if (time > 0) {
-      uint16_t mins = time / 60;
-      uint16_t secs = time % 60;
-      tft->print(mins);
-      tft->print(":");
-      if (secs < 10) tft->print("0");
-      tft->print(secs);
-    } else {
-      tft->print("--");
-    }
+void TelemetryView::updateSessionTimeLeft() {
+  uint16_t timeLeft = model->getSessionTimeLeft();
+  if (timeLeft != lastSessionTimeLeft) {
+    tft->fillRect(210, 49, 100, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(timeLeft < 300 ? COLOR_RED : COLOR_WHITE);
+    tft->setCursor(210, 49);
 
-    lastSessionTimeLeft = time;
+    uint16_t minutes = timeLeft / 60;
+    uint16_t seconds = timeLeft % 60;
+
+    if (minutes < 10) tft->print("0");
+    tft->print(minutes);
+    tft->print(":");
+    if (seconds < 10) tft->print("0");
+    tft->print(seconds);
+
+    lastSessionTimeLeft = timeLeft;
   }
 }
 
 void TelemetryView::updateSafetyCarStatus() {
   uint8_t status = model->getSafetyCarStatus();
   if (status != lastSafetyCarStatus) {
-    tft->fillRect(140, 140, 160, 15, COLOR_BLACK);
+    tft->fillRect(190, 61, 120, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setCursor(140, 140);
+
+    const char* statusText;
+    uint16_t color;
     switch (status) {
       case 0:
-        tft->setTextColor(COLOR_GREEN);
-        tft->print("No Safety Car");
+        statusText = "NO";
+        color = COLOR_GREEN;
         break;
       case 1:
-        tft->setTextColor(COLOR_YELLOW);
-        tft->print("Full Safety Car");
+        statusText = "FULL";
+        color = COLOR_YELLOW;
         break;
       case 2:
-        tft->setTextColor(COLOR_YELLOW);
-        tft->print("Virtual SC");
+        statusText = "VIRTUAL";
+        color = COLOR_YELLOW;
         break;
       case 3:
-        tft->setTextColor(COLOR_CYAN);
-        tft->print("Formation Lap");
+        statusText = "FORMATION";
+        color = COLOR_CYAN;
         break;
       default:
-        tft->setTextColor(COLOR_DARKGREY);
-        tft->print("Unknown");
+        statusText = "NO";
+        color = COLOR_GREEN;
         break;
     }
+
+    tft->setTextColor(color);
+    tft->setCursor(210, 61);
+    tft->print(statusText);
     lastSafetyCarStatus = status;
   }
 }
 
-void TelemetryView::updatePitStopWindow() {
-  uint8_t lap = model->getPitStopWindowIdealLap();
-  uint8_t sessionType = model->getSessionType();
-
-  if (lap != lastPitStopWindowIdealLap) {
-    tft->fillRect(140, 160, 160, 15, COLOR_BLACK);
+void TelemetryView::updateBestLap() {
+  uint32_t bestLap = model->getBestLapTimeMS();
+  if (bestLap != lastBestLapTime) {
+    tft->fillRect(8, 115, 150, 10, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_MAGENTA);
-    tft->setCursor(140, 160);
+    tft->setTextColor(COLOR_GREEN);
+    tft->setCursor(8, 115);
 
-    if (sessionType != SESSION_RACE && sessionType != SESSION_RACE2 && sessionType != SESSION_RACE3) {
-      tft->print("--");
-    } else if (lap > 0) {
-      tft->print("Lap ");
-      tft->print(lap);
+    if (bestLap > 0) {
+      char buffer[16];
+      model->formatLapTime(bestLap, buffer);
+      tft->print(buffer);
     } else {
-      tft->print("N/A");
+      tft->print("--:--.---");
     }
-
-    lastPitStopWindowIdealLap = lap;
+    lastBestLapTime = bestLap;
   }
 }
 
-void TelemetryView::updateTotalLaps() {
-  uint8_t laps = model->getTotalLaps();
-  if (laps != lastTotalLaps) {
-    tft->fillRect(140, 180, 160, 15, COLOR_BLACK);
+void TelemetryView::updateLastLap() {
+  uint32_t lastLap = model->getLastLapTimeMS();
+  uint32_t bestLap = model->getBestLapTimeMS();
+
+  if (lastLap != lastLastLapTime) {
+    tft->fillRect(8, 137, 150, 17, COLOR_BLACK);
     tft->setTextSize(1);
-    tft->setTextColor(COLOR_WHITE);
-    tft->setCursor(140, 180);
-    tft->print(laps);
-    lastTotalLaps = laps;
+    tft->setCursor(8, 137);
+
+    if (lastLap > 0) {
+      char buffer[16];
+      model->formatLapTime(lastLap, buffer);
+
+      if (bestLap > 0 && lastLap >= bestLap) {
+        uint32_t delta = lastLap - bestLap;
+        tft->setTextColor(COLOR_YELLOW);
+        tft->print(buffer);
+        tft->setCursor(8, 147);
+        tft->print("+");
+        tft->print(delta / 1000.0f, 3);
+      } else if (bestLap > 0 && lastLap < bestLap) {
+        tft->setTextColor(COLOR_GREEN);
+        tft->print(buffer);
+        tft->setCursor(8, 147);
+        tft->print("BEST!");
+      } else {
+        tft->setTextColor(COLOR_WHITE);
+        tft->print(buffer);
+      }
+    } else {
+      tft->setTextColor(COLOR_DARKGREY);
+      tft->print("--:--.---");
+    }
+    lastLastLapTime = lastLap;
+  }
+}
+
+void TelemetryView::updateSectorTimes() {
+  uint16_t sector1 = model->getSector1TimeMS();
+  uint16_t sector2 = model->getSector2TimeMS();
+
+  if (sector1 != lastSector1Time) {
+    tft->fillRect(165, 115, 145, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(165, 115);
+    if (sector1 > 0) {
+      tft->print(sector1 / 1000.0f, 3);
+      tft->print("s");
+    } else {
+      tft->print("--");
+    }
+    lastSector1Time = sector1;
+  }
+
+  if (sector2 != lastSector2Time) {
+    tft->fillRect(165, 137, 145, 10, COLOR_BLACK);
+    tft->setTextSize(1);
+    tft->setTextColor(COLOR_CYAN);
+    tft->setCursor(165, 137);
+    if (sector2 > 0) {
+      tft->print(sector2 / 1000.0f, 3);
+      tft->print("s");
+    } else {
+      tft->print("--");
+    }
+    lastSector2Time = sector2;
+  }
+}
+
+
+void TelemetryView::updateFuelStatus() {
+  float fuelLaps = model->getFuelRemainingLaps();
+  if (abs(fuelLaps - lastFuelRemaining) > 0.1f) {
+    tft->fillRect(55, 181, 255, 10, COLOR_BLACK);
+
+    tft->drawRect(55, 182, 150, 8, COLOR_DARKGREY);
+
+    int barWidth = (int)((fuelLaps / 20.0f) * 150);
+    if (barWidth > 150) barWidth = 150;
+
+    uint16_t color = fuelLaps < 3 ? COLOR_RED : (fuelLaps < 5 ? COLOR_YELLOW : COLOR_GREEN);
+    if (barWidth > 0) {
+      tft->fillRect(56, 183, barWidth, 6, color);
+    }
+
+    tft->setTextSize(1);
+    tft->setTextColor(color);
+    tft->setCursor(210, 181);
+    tft->print(fuelLaps, 1);
+    tft->print(" laps");
+
+    lastFuelRemaining = fuelLaps;
+  }
+}
+
+void TelemetryView::updateTyreStatus() {
+  uint8_t tyreAge = model->getTyresAgeLaps();
+  if (tyreAge != lastTyresAge) {
+    tft->fillRect(55, 196, 255, 10, COLOR_BLACK);
+
+    tft->drawRect(55, 197, 150, 8, COLOR_DARKGREY);
+
+    int barWidth = (int)((tyreAge / 30.0f) * 150);
+    if (barWidth > 150) barWidth = 150;
+
+    uint16_t color = tyreAge > 25 ? COLOR_RED : (tyreAge > 15 ? COLOR_YELLOW : COLOR_GREEN);
+    if (barWidth > 0) {
+      tft->fillRect(56, 198, barWidth, 6, color);
+    }
+
+    tft->setTextSize(1);
+    tft->setTextColor(color);
+    tft->setCursor(210, 196);
+    tft->print(tyreAge);
+    tft->print(" laps");
+
+    lastTyresAge = tyreAge;
+  }
+}
+
+void TelemetryView::updateEngineStatus() {
+  uint16_t engineTemp = model->getEngineTemp();
+  if (engineTemp != lastEngineTempCritical) {
+    tft->fillRect(55, 211, 255, 10, COLOR_BLACK);
+
+    tft->drawRect(55, 212, 150, 8, COLOR_DARKGREY);
+
+    int barWidth = (int)(((engineTemp - 80) / 100.0f) * 150);
+    if (barWidth < 0) barWidth = 0;
+    if (barWidth > 150) barWidth = 150;
+
+    uint16_t color = engineTemp >= 160 ? COLOR_RED : (engineTemp >= 140 ? COLOR_YELLOW : COLOR_GREEN);
+    if (barWidth > 0) {
+      tft->fillRect(56, 213, barWidth, 6, color);
+    }
+
+    tft->setTextSize(1);
+    tft->setTextColor(color);
+    tft->setCursor(210, 211);
+    tft->print(engineTemp);
+    tft->print("C");
+
+    lastEngineTempCritical = engineTemp;
+  }
+}
+
+void TelemetryView::updateDamageStatus() {
+  uint8_t fl = model->getFrontLeftWingDamage();
+  uint8_t fr = model->getFrontRightWingDamage();
+  uint8_t floor = model->getFloorDamage();
+  uint8_t diffuser = model->getDiffuserDamage();
+
+  uint8_t totalDamage = (fl + fr + floor + diffuser) / 4;
+
+  if (totalDamage != lastOverallDamage) {
+    tft->fillRect(55, 226, 255, 10, COLOR_BLACK);
+
+    tft->drawRect(55, 227, 150, 8, COLOR_DARKGREY);
+
+    int barWidth = (int)((totalDamage / 100.0f) * 150);
+    if (barWidth > 150) barWidth = 150;
+
+    uint16_t color = totalDamage > 50 ? COLOR_RED : (totalDamage > 25 ? COLOR_YELLOW : COLOR_GREEN);
+    if (barWidth > 0) {
+      tft->fillRect(56, 228, barWidth, 6, color);
+    }
+
+    tft->setTextSize(1);
+    tft->setTextColor(color);
+    tft->setCursor(210, 226);
+    tft->print(totalDamage);
+    tft->print("%");
+
+    lastOverallDamage = totalDamage;
   }
 }
 
 // ============================================
-// BOOT SCREEN (NEATINS!)
+// BOOT SCREEN
 // ============================================
 
 void TelemetryView::drawBootAnimation(uint32_t elapsedMS) {

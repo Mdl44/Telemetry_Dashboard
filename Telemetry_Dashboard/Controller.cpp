@@ -16,7 +16,6 @@ TelemetryController::TelemetryController(TelemetryModel* m, TelemetryView* v, Wi
 
 void TelemetryController::init() {
   Serial.begin(SERIAL_BAUD_RATE);
-  Serial.println("F1 Telemetry Dashboard Starting...");
 
   pinMode(PIN_BUTTON, INPUT_PULLUP);
   pinMode(PIN_BUZZER, OUTPUT);
@@ -26,20 +25,15 @@ void TelemetryController::init() {
   setupWiFi();
 
   udp->begin(UDP_PORT);
-  Serial.print("UDP listening on port: ");
-  Serial.println(UDP_PORT);
 
   bootStartTime = millis();
   bootState = BOOT_ANIMATION;
 }
 
 void TelemetryController::setupWiFi() {
-  Serial.println("Starting WiFi AP...");
   WiFi.softAP(WIFI_AP_SSID, WIFI_AP_PASSWORD);
 
   IPAddress ip = WiFi.softAPIP();
-  Serial.print("AP IP: ");
-  Serial.println(ip);
 }
 
 void TelemetryController::update() {
@@ -48,7 +42,7 @@ void TelemetryController::update() {
 
   if (bootState == BOOT_ANIMATION) {
     view->drawBootAnimation(elapsed);
-    if (elapsed >= 2000) {
+    if (elapsed >= BOOT_ANIMATION_DURATION) {
       bootState = BOOT_WAITING;
       view->drawBootInfo(WiFi.softAPIP());
     }
@@ -61,7 +55,6 @@ void TelemetryController::update() {
     handleNetworkPackets();
 
     if (firstPacketReceived) {
-      Serial.println("First packet received - showing dashboard");
       bootState = BOOT_COMPLETE;
       view->drawLayout();
     }
@@ -73,7 +66,6 @@ void TelemetryController::update() {
   handleNetworkPackets();
 
   if (WiFi.softAPgetStationNum() == 0 && firstPacketReceived) {
-    Serial.println("Client disconnected - returning to boot screen");
     bootState = BOOT_WAITING;
     firstPacketReceived = false;
     view->resetBootInfo();
@@ -95,8 +87,6 @@ void TelemetryController::handleButtonPress() {
 
   if (reading == LOW && lastButtonState == HIGH) {
     view->nextScreen();
-    Serial.print("Screen changed to: ");
-    Serial.println(view->getCurrentScreen());
     lastButtonState = LOW;
     return;
   }
@@ -169,7 +159,6 @@ void TelemetryController::processPacket(uint8_t* buffer, int size) {
       break;
   }
 }
-
 void TelemetryController::playBuzzerBeep(uint8_t duration) {
   tone(PIN_BUZZER, 2000, duration);
   delay(duration);
@@ -183,16 +172,11 @@ void TelemetryController::checkBuzzerTriggers() {
   if (lastGear != -99 && currentGear != lastGear) {
     if (currentGear > 0 && lastGear > 0) {
       playBuzzerBeep(50);
-      Serial.print("Gear shift: ");
-      Serial.print(lastGear);
-      Serial.print(" -> ");
-      Serial.println(currentGear);
     }
   }
 
   if (lastDRSAvailable == 0 && currentDRS == 1) {
     playBuzzerBeep(100);
-    Serial.println("DRS Available!");
   }
 
   lastGear = currentGear;

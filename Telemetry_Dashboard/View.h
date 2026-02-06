@@ -1,18 +1,14 @@
 #ifndef VIEW_H
 #define VIEW_H
 
-#include <Arduino.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ILI9341.h>
 #include <Adafruit_NeoPixel.h>
-#include "Config.h"
 #include "Model.h"
+#include "Config.h"
 
 class TelemetryView {
-  Adafruit_ILI9341* tft;
-  Adafruit_NeoPixel* pixels;
-  TelemetryModel* model;
-
+public:
   // ============================================
   // Screen Management
   // ============================================
@@ -23,21 +19,29 @@ class TelemetryView {
     SCREEN_SESSION_INFO = 3
   };
 
-  Screen currentScreen;
-  bool screenChanged;
+private:
+  // ============================================
+  // Hardware References
+  // ============================================
+  Adafruit_ILI9341* tft;
+  Adafruit_NeoPixel* pixels;
+  TelemetryModel* model;
 
   // ============================================
-  // Boot State
+  // Screen State
   // ============================================
+  Screen currentScreen;
+  bool screenChanged;
   bool bootInfoDrawn;
 
   // ============================================
-  // Dirty Tracking - General Screen
+  // Dirty Tracking - SCREEN 1: GENERAL
   // ============================================
   uint8_t lastPosition;
   uint16_t lastDeltaFront;
   uint16_t lastDeltaLeader;
-  float lastSafetyCarDelta;
+  float lastDeltaLive;
+
   uint32_t lastLapTime;
   uint32_t lastCurrentLapTime;
   uint16_t lastSector1;
@@ -50,83 +54,122 @@ class TelemetryView {
   float lastBrake;
   int8_t lastGear;
   uint16_t lastRPM;
+
   uint8_t lastDRS;
   uint8_t lastRevLightsPercent;
   int8_t lastSuggestedGear;
-
   uint8_t lastFrontBrakeBias;
   uint8_t lastDiffOnThrottle;
+
   float lastFuelInTank;
   float lastFuelRemainingLaps;
   float lastERSEnergy;
   uint8_t lastERSMode;
 
-  uint8_t lastLedsOn;
+  int lastLedsOn;
 
   // ============================================
-  // Dirty Tracking - Car Info Screen
+  // Dirty Tracking - SCREEN 2: TYRE INFO
   // ============================================
+  uint8_t lastTyresAgeLaps;
+
   uint16_t lastBrakeTempFL;
   uint16_t lastBrakeTempFR;
   uint16_t lastBrakeTempRL;
   uint16_t lastBrakeTempRR;
+
   uint8_t lastTyreSurfTempFL;
   uint8_t lastTyreSurfTempFR;
   uint8_t lastTyreSurfTempRL;
   uint8_t lastTyreSurfTempRR;
+
   uint8_t lastTyreInnerTempFL;
   uint8_t lastTyreInnerTempFR;
   uint8_t lastTyreInnerTempRL;
   uint8_t lastTyreInnerTempRR;
-  uint16_t lastEngineTemp;
+
   float lastTyrePressureFL;
   float lastTyrePressureFR;
   float lastTyrePressureRL;
   float lastTyrePressureRR;
-  uint8_t lastTyresAgeLaps;
 
   float lastTyreWearFL;
   float lastTyreWearFR;
   float lastTyreWearRL;
   float lastTyreWearRR;
+
   uint8_t lastTyreDamageFL;
   uint8_t lastTyreDamageFR;
   uint8_t lastTyreDamageRL;
   uint8_t lastTyreDamageRR;
+
   uint8_t lastBrakeDamageFL;
   uint8_t lastBrakeDamageFR;
   uint8_t lastBrakeDamageRL;
   uint8_t lastBrakeDamageRR;
-  uint8_t lastFrontLeftWingDamage;
-  uint8_t lastFrontRightWingDamage;
-  uint8_t lastRearWingDamage;
+
+  // ============================================
+  // Dirty Tracking - SCREEN 3: CAR INFO
+  // ============================================
+  float lastICEPower;
+  float lastMGUKPower;
+  float lastERSPercent;
+  uint16_t lastEngineTemp;
+  uint8_t lastDRSFault;
+  uint8_t lastERSFault;
+
+  uint8_t lastWingDamageFL;
+  uint8_t lastWingDamageFR;
+  uint8_t lastWingDamageRear;
   uint8_t lastFloorDamage;
   uint8_t lastDiffuserDamage;
   uint8_t lastSidepodDamage;
-  uint8_t lastDRSFault;
-  uint8_t lastERSFault;
-  uint8_t lastGearBoxDamage;
-  uint8_t lastEngineDamage;
-  uint8_t lastEngineMGUHWear;
-  uint8_t lastEngineESWear;
-  uint8_t lastEngineCEWear;
-  uint8_t lastEngineICEWear;
-  uint8_t lastEngineMGUKWear;
-  uint8_t lastEngineTCWear;
-  uint8_t lastEngineBlown;
-  uint8_t lastEngineSeized;
+
+  uint8_t lastGearboxDamage;
+  uint8_t lastICEDamage;
+  uint8_t lastMGUHDamage;
+  uint8_t lastMGUKDamage;
+  uint8_t lastTCDamage;
+  uint8_t lastERSDamage;
+  uint8_t lastCEDamage;
+
 
   // ============================================
-  // Dirty Tracking - Session Info Screen
+  // Dirty Tracking - SCREEN 4: RACE OVERVIEW
   // ============================================
   uint8_t lastWeather;
   int8_t lastTrackTemp;
   int8_t lastAirTemp;
+
   uint8_t lastSessionType;
+  uint8_t lastCurrentLapInfo;
+  uint8_t lastTotalLaps;
   uint16_t lastSessionTimeLeft;
   uint8_t lastSafetyCarStatus;
-  uint8_t lastPitStopWindowIdealLap;
-  uint8_t lastTotalLaps;
+
+  uint32_t lastBestLapTime;
+  uint32_t lastLastLapTime;
+  uint16_t lastSector1Time;
+  uint16_t lastSector2Time;
+
+  float lastFuelRemaining;
+  uint8_t lastTyresAge;
+  uint16_t lastEngineTempCritical;
+  uint8_t lastOverallDamage;
+
+public:
+  // ============================================
+  // Constructor
+  // ============================================
+  TelemetryView(Adafruit_ILI9341* display, Adafruit_NeoPixel* leds, TelemetryModel* m);
+
+  // ============================================
+  // Core Methods
+  // ============================================
+  void init();
+  void render();
+  void drawLayout();
+  void nextScreen();
 
   // ============================================
   // Screen Drawing Methods
@@ -137,7 +180,7 @@ class TelemetryView {
   void drawSessionInfoScreen();
 
   // ============================================
-  // Dirty Tracking Reset Methods
+  // Reset Dirty Tracking
   // ============================================
   void resetGeneralDirtyTracking();
   void resetTyreInfoDirtyTracking();
@@ -145,19 +188,18 @@ class TelemetryView {
   void resetSessionInfoDirtyTracking();
 
   // ============================================
-  // Update Methods - General Screen
+  // Update Methods - SCREEN 1: GENERAL
   // ============================================
   void updatePosition();
   void updateDeltaFront();
   void updateDeltaLeader();
-  void updateSafetyCarDelta();
+  void updateDeltaLive();
   void updateLastLapTime();
   void updateCurrentLapTime();
   void updateSector1();
   void updateSector2();
   void updateCurrentLapNum();
   void updateCornerCuttingWarnings();
-
   void updateSpeed();
   void updateThrottle();
   void updateBrake();
@@ -166,65 +208,60 @@ class TelemetryView {
   void updateDRS();
   void updateRevLights();
   void updateSuggestedGear();
-
   void updateFrontBrakeBias();
   void updateDiffOnThrottle();
   void updateFuelInTank();
   void updateFuelRemainingLaps();
   void updateERSEnergy();
   void updateERSMode();
-
   void updateLEDs();
 
   // ============================================
-  // Update Methods - Tyre Info Screen
+  // Update Methods - SCREEN 2: TYRE INFO
   // ============================================
+  void updateTyresAgeLaps();
   void updateBrakeTemps();
   void updateTyreSurfaceTemps();
   void updateTyreInnerTemps();
   void updateTyrePressures();
-  void updateTyresAgeLaps();
   void updateTyreWear();
   void updateTyreDamage();
   void updateBrakeDamage();
 
   // ============================================
-  // Update Methods - Car Info Screen
+  // Update Methods - SCREEN 3: CAR INFO
   // ============================================
-  void updateEngineTemp();
-  void updateWingDamage();
+  void updatePowerUnit();
   void updateAeroDamage();
-  void updatePowertrainDamage();
-  void updateCriticalDamage();
+  void updateComponentWear();
 
   // ============================================
-  // Update Methods - Session Info Screen
+  // Update Methods - SCREEN 4: RACE OVERVIEW
   // ============================================
   void updateWeather();
   void updateTrackTemp();
   void updateAirTemp();
+
   void updateSessionType();
+  void updateLapInfo();
   void updateSessionTimeLeft();
   void updateSafetyCarStatus();
-  void updatePitStopWindow();
-  void updateTotalLaps();
 
-public:
-  TelemetryView(Adafruit_ILI9341* display, Adafruit_NeoPixel* leds, TelemetryModel* m);
+  void updateBestLap();
+  void updateLastLap();
+  void updateSectorTimes();
 
-  void init();
-  void render();
-  void drawLayout();
+  void updateFuelStatus();
+  void updateTyreStatus();
+  void updateEngineStatus();
+  void updateDamageStatus();
 
+  // ============================================
+  // Boot Screen
+  // ============================================
   void drawBootAnimation(uint32_t elapsedMS);
   void drawBootInfo(IPAddress ip);
   void resetBootInfo();
-
-  void nextScreen();
-  void previousScreen();
-  Screen getCurrentScreen() const {
-    return currentScreen;
-  }
 };
 
 #endif

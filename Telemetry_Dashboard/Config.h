@@ -76,30 +76,16 @@ enum SessionType {
   SESSION_TIME_TRIAL = 13
 };
 
-enum TrackStatus {
-  TRACK_GREEN = 0,
-  TRACK_YELLOW = 1,
-  TRACK_SAFETY_CAR = 2,
-  TRACK_RED = 4
-};
-
 enum DRSStatus {
   DRS_NOT_AVAILABLE = 0,
   DRS_AVAILABLE = 1,
   DRS_ACTIVE = 2
 };
 
-enum ERSMode {
-  ERS_OFF = 0,
-  ERS_MEDIUM = 1,
-  ERS_HOTLAP = 2,
-  ERS_OVERTAKE = 3
-};
 
 // ==========================================
 // 7. F1 GAME PACKET IDs
 // ==========================================
-const uint8_t PACKET_ID_MOTION = 0;
 const uint8_t PACKET_ID_SESSION = 1;
 const uint8_t PACKET_ID_LAP_DATA = 2;
 const uint8_t PACKET_ID_CAR_SETUPS = 5;
