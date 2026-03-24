@@ -3,7 +3,7 @@
 ## 1. Description
 The **Wireless Telemetry Dashboard** is a high-performance hardware companion built on the ESP32 platform. It serves as a dedicated race engineer, bridging the gap between simulation and reality by extracting live telemetry data from **F1 23** via Wi-Fi.
 
-Unlike generic dashboards, this system functions as a standalone Access Point, eliminating connection hassles. It processes complex telemetry packets locally to provide features typically found only in PC software, such as **Live Delta timing** and **Tyre Thermal auditing**, directly on your steering wheel or desk.
+Unlike generic dashboards, this system functions as a standalone Access Point, eliminating connection hassles. It processes complex telemetry packets locally to provide features typically found only in PC software, such as **Sim Racing Telemetry** and **SimHub**, directly on your steering wheel or desk.
 
 ---
 
